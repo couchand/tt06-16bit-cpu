@@ -33,10 +33,21 @@ module tt_um_couchand_spi_ram (
   assign start_read = uio_in[5];
 
   wire [7:0] ram_data;
+  wire ram_start_read = state == ST_READ_START;
+  wire ram_start_write = state == ST_WRITE_START;
 
   reg [15:0] addr;
   reg [7:0] data;
   reg waiting;
+
+  reg [2:0] state;
+
+  localparam ST_IDLE = 0;
+  localparam ST_READ_ADDR0 = 1;
+  localparam ST_READ_START = 2;
+  localparam ST_WRITE_ADDR0 = 3;
+  localparam ST_WRITE_ADDR1 = 4;
+  localparam ST_WRITE_START = 5;
 
   assign uo_out = data;
 
@@ -51,9 +62,9 @@ module tt_um_couchand_spi_ram (
     .spi_clk_out(spi_clk),
     .spi_mosi(spi_mosi),
     .addr_in(addr),
-    .data_in(ui_in),
-    .start_read(start_read),
-    .start_write(start_write),
+    .data_in(data),
+    .start_read(ram_start_read),
+    .start_write(ram_start_write),
     .data_out(ram_data),
     .busy(busy)
   );
@@ -63,15 +74,33 @@ module tt_um_couchand_spi_ram (
       addr <= 0;
       data <= 0;
       waiting <= 0;
+      state <= ST_IDLE;
     end else if (waiting) begin
-      if (!busy) begin
+      if (state == ST_READ_ADDR0) begin
+        addr[15:8] <= ui_in;
+        state <= ST_READ_START;
+      end else if (state == ST_READ_START) begin
+        state <= ST_IDLE;
+      end else if (state == ST_WRITE_ADDR0) begin
+        addr[15:8] <= ui_in;
+        state <= ST_WRITE_ADDR1;
+      end else if (state == ST_WRITE_ADDR1) begin
+        data <= ui_in;
+        state <= ST_WRITE_START;
+      end else if (state == ST_WRITE_START) begin
+        state <= ST_IDLE;
+      end else if (!busy) begin
         waiting <= 0;
         data <= ram_data;
       end
     end else if (start_write) begin
       waiting <= 1;
+      addr[7:0] <= ui_in;
+      state <= ST_WRITE_ADDR0;
     end else if (start_read) begin
       waiting <= 1;
+      addr[7:0] <= ui_in;
+      state <= ST_READ_ADDR0;
     end
   end
 
