@@ -22,8 +22,14 @@ module tb ();
   wire [7:0] uio_out;
   wire [7:0] uio_oe;
 
+  wire spi_miso, spi_select, spi_clk, spi_mosi;
+  assign uio_in[3] = spi_miso;
+  assign spi_select = uio_out[1];
+  assign spi_clk = uio_out[2];
+  assign spi_mosi = uio_out[0];
+
   // Replace tt_um_example with your module name:
-  tt_um_example user_project (
+  tt_um_couchand_spi_ram user_project (
 
       // Include power ports for the Gate Level test:
 `ifdef GL_TEST
@@ -39,6 +45,19 @@ module tb ();
       .ena    (ena),      // enable - goes high when design is selected
       .clk    (clk),      // clock
       .rst_n  (rst_n)     // not reset
+  );
+
+  reg debug_clk;
+  reg [23:0] debug_addr;
+  wire [31:0] debug_data;
+  sim_spi_ram spi_ram(
+    .spi_clk(spi_clk),
+    .spi_mosi(spi_mosi),
+    .spi_select(spi_select),
+    .spi_miso(spi_miso),
+    .debug_clk(debug_clk),
+    .debug_addr(debug_addr),
+    .debug_data(debug_data)
   );
 
 endmodule
