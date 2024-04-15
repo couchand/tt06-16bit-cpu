@@ -59,12 +59,13 @@ module sim_spi_ram (
         end else begin
             if (reading || writing) begin
                 addr <= addr + 1;
-            end else if (!reading && !writing && !error && start_count == 32) begin
-                addr[26:3] <= cmd[23:0];
+            end else if (!reading && !writing && !error && start_count == 24) begin
+                addr[26:19] <= 0;
+                addr[18:3] <= cmd[15:0];
                 addr[2:0] <= 0;
-                if (cmd[31:24] == 3)
+                if (cmd[23:16] == 3)
                     reading <= 1;
-                else if (cmd[31:24] == 2)
+                else if (cmd[23:16] == 2)
                     writing <= 1;
                 else
                     error <= 1;
