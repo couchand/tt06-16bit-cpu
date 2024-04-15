@@ -28,7 +28,7 @@ module tt_um_couchand_spi_ram (
   assign uio_out[0] = spi_mosi;
 
   wire start_read, start_write, busy;
-  assign uio_out[7] = busy;
+  assign uio_out[7] = waiting;
   assign start_write = uio_in[4];
   assign start_read = uio_in[5];
 

@@ -42,6 +42,6 @@ async def test_project(dut):
   await ClockCycles(dut.clk, 1)
 
   while dut.uio_out.value & 0b10000000 != 0:
-    await ClockCycles(dut.clk, 10)
+    await ClockCycles(dut.clk, 1)
 
   assert dut.uo_out.value == 50
