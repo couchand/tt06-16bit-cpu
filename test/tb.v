@@ -28,6 +28,9 @@ module tb ();
   assign spi_clk = uio_out[2];
   assign spi_mosi = uio_out[0];
 
+  wire busy;
+  assign busy = uio_out[5];
+
   tt_um_couchand_16bit_cpu user_project (
 
       // Include power ports for the Gate Level test:

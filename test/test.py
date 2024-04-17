@@ -33,7 +33,7 @@ async def test_project(dut):
     dut.uio_in.value = 0x00
     await ClockCycles(dut.clk, 10)
 
-    while dut.uio_out.value & 0b00100000 != 0:
+    while dut.busy != 0:
       await ClockCycles(dut.clk, 10)
 
   await ClockCycles(dut.clk, 10)
