@@ -104,3 +104,22 @@ async def test_project(dut):
   assert dut.trap.value == 0
 
   await ClockCycles(dut.clk, 10)
+
+  # Branch backwards
+
+  for i in range(0, 6):
+    dut.uio_in.value = 0x10
+    await ClockCycles(dut.clk, 10)
+    dut.uio_in.value = 0x00
+    await ClockCycles(dut.clk, 10)
+
+    while dut.busy != 0:
+      await ClockCycles(dut.clk, 10)
+
+  await ClockCycles(dut.clk, 10)
+
+  assert dut.uo_out.value == 0x5A
+  assert dut.halt.value == 0
+  assert dut.trap.value == 0
+
+  await ClockCycles(dut.clk, 10)
