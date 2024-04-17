@@ -28,8 +28,7 @@ module tb ();
   assign spi_clk = uio_out[2];
   assign spi_mosi = uio_out[0];
 
-  // Replace tt_um_example with your module name:
-  tt_um_couchand_spi_ram user_project (
+  tt_um_couchand_16bit_cpu user_project (
 
       // Include power ports for the Gate Level test:
 `ifdef GL_TEST
