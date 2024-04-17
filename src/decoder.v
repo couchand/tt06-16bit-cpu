@@ -13,7 +13,6 @@ module decoder (
     output wire        inst_load,
     output wire        inst_add,
     output wire        inst_out_lo,
-    output wire        inst_unknown,
     output wire        source_imm,
     output wire        source_ram
 );
@@ -27,8 +26,6 @@ module decoder (
 
   assign inst_load = (inst & 16'hF800) == 16'h8000;
   assign inst_add  = (inst & 16'hF800) == 16'h8800;
-
-  assign inst_unknown = ~inst_nop & ~inst_load & ~inst_add & ~inst_out_lo;
 
   wire source_const = !one_arg ? 0 : (inst & 16'h0600) == 16'h0000;
   wire source_data  = !one_arg ? 0 : (inst & 16'h0600) == 16'h0200;

@@ -28,7 +28,7 @@ module cpu (
   reg [15:0] accum;
 
   wire [15:0] rhs;
-  wire inst_nop, inst_load, inst_add, inst_out_lo, inst_unknown;
+  wire inst_nop, inst_load, inst_add, inst_out_lo;
   wire source_imm, source_ram;
   decoder inst_decoder(
     .inst(inst),
@@ -38,7 +38,6 @@ module cpu (
     .inst_load(inst_load),
     .inst_add(inst_add),
     .inst_out_lo(inst_out_lo),
-    .inst_unknown(inst_unknown),
     .source_imm(source_imm),
     .source_ram(source_ram)
   );
@@ -131,7 +130,7 @@ module cpu (
           pc <= pc + 1;
           state <= ST_INIT;
           data_out <= accum[7:0];
-        end else if (inst_unknown) begin
+        end else begin
           state <= ST_TRAP;
         end
       end else if (state == ST_INST_EXEC1) begin
@@ -144,8 +143,12 @@ module cpu (
             accum <= accum + ram_data_out;
             pc <= pc + 2;
             state <= ST_INIT;
+          end else begin
+            state <= ST_TRAP;
           end
         end
+      end else begin
+        state <= ST_TRAP;
       end
     end
   end
