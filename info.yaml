@@ -17,6 +17,7 @@ project:
   source_files:        
     - "project.v"
     - "cpu.v"
+    - "decoder.v"
     - "spi.v"
 
 # The pinout of your project. Leave unused pins blank. DO NOT delete or add any pins.
