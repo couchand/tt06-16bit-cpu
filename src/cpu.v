@@ -26,10 +26,14 @@ module cpu (
   reg [15:0] pc;
   reg [15:0] inst;
   reg [15:0] accum;
+  reg zero;
+  reg skip;
+  reg skipped;
 
   wire [15:0] rhs;
-  wire inst_nop, inst_load, inst_add, inst_branch, inst_out_lo;
+  wire inst_nop, inst_load, inst_add, inst_branch, inst_if, inst_out_lo;
   wire source_imm, source_ram;
+  wire if_zero, if_not_zero, if_else, if_not_else;
   wire decoding = (state == ST_INST_EXEC0) | (state == ST_INST_EXEC1);
   decoder inst_decoder(
     .en(decoding),
@@ -40,9 +44,14 @@ module cpu (
     .inst_load(inst_load),
     .inst_add(inst_add),
     .inst_branch(inst_branch),
+    .inst_if(inst_if),
     .inst_out_lo(inst_out_lo),
     .source_imm(source_imm),
-    .source_ram(source_ram)
+    .source_ram(source_ram),
+    .if_zero(if_zero),
+    .if_not_zero(if_not_zero),
+    .if_else(if_else),
+    .if_not_else(if_not_else)
   );
 
   reg [8:0] state;
@@ -94,6 +103,9 @@ module cpu (
       pc <= 0;
       inst <= 0;
       accum <= 0;
+      zero <= 0;
+      skip <= 0;
+      skipped <= 0;
       ram_data_in <= 0;
       ram_start_write <= 0;
       data_out <= 0;
@@ -114,39 +126,75 @@ module cpu (
           pc <= pc + 1;
           state <= ST_INIT;
         end else if (inst_load) begin
-          if (source_imm) begin
+          if (skip) begin
+            pc <= pc + 2;
+            state <= ST_INIT;
+          end else if (source_imm) begin
             accum <= rhs;
+            zero <= rhs == 0;
             pc <= pc + 2;
             state <= ST_INIT;
           end else if (source_ram) begin
             state <= ST_INST_EXEC1;
           end
         end else if (inst_add) begin
-          if (source_imm) begin
+          if (skip) begin
+            pc <= pc + 2;
+            state <= ST_INIT;
+          end else if (source_imm) begin
             accum <= accum + rhs;
+            zero <= (accum + rhs) == 0;
             pc <= pc + 2;
             state <= ST_INIT;
           end else if (source_ram) begin
             state <= ST_INST_EXEC1;
           end
         end else if (inst_branch) begin
-          pc <= pc + 2 + rhs;
+          state <= ST_INIT;
+          if (skip) begin
+            pc <= pc + 2;
+          end else begin
+            pc <= pc + 2 + rhs;
+          end
+        end else if (inst_if) begin
+          pc <= pc + 2;
           state <= ST_INIT;
         end else if (inst_out_lo) begin
           pc <= pc + 1;
           state <= ST_INIT;
-          data_out <= accum[7:0];
+          if (~skip) begin
+            data_out <= accum[7:0];
+          end
         end else begin
           state <= ST_TRAP;
         end
+
+        if (inst_if) begin
+          if (if_zero) begin
+            skip <= ~zero;
+          end else if (if_not_zero) begin
+            skip <= zero;
+          end else if (if_else) begin
+            skip <= ~skipped;
+          end else if (if_not_else) begin
+            skip <= skipped;
+          end
+        end else begin
+          skip <= 0;
+        end
+
+        skipped <= skip;
+
       end else if (state == ST_INST_EXEC1) begin
         if (!ram_busy) begin
           if (inst_load) begin
             accum <= ram_data_out;
+            zero <= ram_data_out == 0;
             pc <= pc + 2;
             state <= ST_INIT;
           end else if (inst_add) begin
             accum <= accum + ram_data_out;
+            zero <= (accum + ram_data_out) == 0;
             pc <= pc + 2;
             state <= ST_INIT;
           end else begin

@@ -123,3 +123,44 @@ async def test_project(dut):
   assert dut.trap.value == 0
 
   await ClockCycles(dut.clk, 10)
+
+  # Conditionals
+
+  for i in range(1, 10):
+    dut.ui_in.value = i
+
+    for step in range(0, 5):
+      dut.uio_in.value = 0x10
+      await ClockCycles(dut.clk, 10)
+      dut.uio_in.value = 0x00
+      await ClockCycles(dut.clk, 10)
+
+      while dut.busy != 0:
+        await ClockCycles(dut.clk, 10)
+
+    await ClockCycles(dut.clk, 10)
+
+    assert dut.uo_out.value == i
+    assert dut.halt.value == 0
+    assert dut.trap.value == 0
+
+    await ClockCycles(dut.clk, 10)
+
+  dut.ui_in.value = 0
+
+  for i in range(0, 5):
+    dut.uio_in.value = 0x10
+    await ClockCycles(dut.clk, 10)
+    dut.uio_in.value = 0x00
+    await ClockCycles(dut.clk, 10)
+
+    while dut.busy != 0:
+      await ClockCycles(dut.clk, 10)
+
+  await ClockCycles(dut.clk, 10)
+
+  assert dut.uo_out.value == 9
+  assert dut.halt.value == 0
+  assert dut.trap.value == 0
+
+  await ClockCycles(dut.clk, 10)
