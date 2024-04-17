@@ -44,6 +44,8 @@ async def test_project(dut):
   assert dut.halt.value == 0
   assert dut.trap.value == 0
 
+  await ClockCycles(dut.clk, 10)
+
   # With input value
 
   dut.ui_in.value = 40
@@ -63,6 +65,8 @@ async def test_project(dut):
   assert dut.halt.value == 0
   assert dut.trap.value == 0
 
+  await ClockCycles(dut.clk, 10)
+
   # With memory read
 
   for i in range(0, 4):
@@ -79,3 +83,24 @@ async def test_project(dut):
   assert dut.uo_out.value == 50
   assert dut.halt.value == 0
   assert dut.trap.value == 0
+
+  await ClockCycles(dut.clk, 10)
+
+  # Branch
+
+  for i in range(0, 4):
+    dut.uio_in.value = 0x10
+    await ClockCycles(dut.clk, 10)
+    dut.uio_in.value = 0x00
+    await ClockCycles(dut.clk, 10)
+
+    while dut.busy != 0:
+      await ClockCycles(dut.clk, 10)
+
+  await ClockCycles(dut.clk, 10)
+
+  assert dut.uo_out.value == 0xA5
+  assert dut.halt.value == 0
+  assert dut.trap.value == 0
+
+  await ClockCycles(dut.clk, 10)
