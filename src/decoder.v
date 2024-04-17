@@ -34,13 +34,14 @@ module decoder (
   wire source_data  = !one_arg ? 0 : (inst & 16'h0600) == 16'h0200;
 
   assign source_imm = source_const | source_data;
-  assign source_ram = !one_arg ? 0 : (inst & 16'h0600) == 16'h0400;
+  assign source_ram = !one_arg ? 0 : (inst & 16'h0400) == 16'h0400;
 
   assign rhs = !one_arg ? 0
     : (inst & 16'h0700) == 16'h0000 ? {8'h00, inst[7:0]}
     : (inst & 16'h0700) == 16'h0100 ? {inst[7:0], 8'h00}
     : (inst & 16'h0700) == 16'h0200 ? {8'h00, data}
     : (inst & 16'h0700) == 16'h0300 ? {data, 8'h00}
+    : (inst & 16'h0700) == 16'h0400 ? {8'h00, inst[7:0]}
     : 0;
 
 endmodule

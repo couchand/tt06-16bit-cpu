@@ -57,8 +57,12 @@ module cpu (
   assign halt = state == ST_HALT;
   assign trap = state == ST_TRAP;
 
-  wire [15:0] ram_addr = state == ST_LOAD_INST0 ? pc : 0;
-  wire ram_start_read = state == ST_LOAD_INST0;
+  wire [15:0] ram_addr = (state == ST_LOAD_INST0) ? pc
+    : ((state == ST_INST_EXEC0) & source_ram) ? rhs
+    : 0;
+  wire ram_start_read = (state == ST_LOAD_INST0) ? 1
+    : ((state == ST_INST_EXEC0) & source_ram) ? 1
+    : 0;
   reg [15:0] ram_data_in;
   reg ram_start_write;
   wire [15:0] ram_data_out;
@@ -108,16 +112,20 @@ module cpu (
           pc <= pc + 1;
           state <= ST_INIT;
         end else if (inst_load) begin
-          pc <= pc + 2;
-          state <= ST_INIT;
           if (source_imm) begin
             accum <= rhs;
+            pc <= pc + 2;
+            state <= ST_INIT;
+          end else if (source_ram) begin
+            state <= ST_INST_EXEC1;
           end
         end else if (inst_add) begin
-          pc <= pc + 2;
-          state <= ST_INIT;
           if (source_imm) begin
             accum <= accum + rhs;
+            pc <= pc + 2;
+            state <= ST_INIT;
+          end else if (source_ram) begin
+            state <= ST_INST_EXEC1;
           end
         end else if (inst_out_lo) begin
           pc <= pc + 1;
@@ -125,6 +133,18 @@ module cpu (
           data_out <= accum[7:0];
         end else if (inst_unknown) begin
           state <= ST_TRAP;
+        end
+      end else if (state == ST_INST_EXEC1) begin
+        if (!ram_busy) begin
+          if (inst_load) begin
+            accum <= ram_data_out;
+            pc <= pc + 2;
+            state <= ST_INIT;
+          end else if (inst_add) begin
+            accum <= accum + ram_data_out;
+            pc <= pc + 2;
+            state <= ST_INIT;
+          end
         end
       end
     end
