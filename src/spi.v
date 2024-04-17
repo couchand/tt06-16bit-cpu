@@ -66,12 +66,6 @@ module spi_ram_controller #(parameter DATA_WIDTH_BYTES=4, parameter ADDR_BITS=16
         if (!rstn) begin
             fsm_state <= FSM_IDLE;
             bits_remaining <= 0;
-
-            // couchand: added init for data & addr
-            `ifdef COCOTB_SIM
-            data <= 0;
-            addr <= 0;
-            `endif
         end else begin
             if (fsm_state == FSM_IDLE) begin
                 if (start_read || start_write) begin
