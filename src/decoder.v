@@ -18,6 +18,7 @@ module decoder (
     output wire        inst_and,
     output wire        inst_or,
     output wire        inst_xor,
+    output wire        inst_not,
     output wire        inst_branch,
     output wire        inst_if,
     output wire        inst_out_lo,
@@ -32,6 +33,7 @@ module decoder (
   wire zero_arg = en & ((inst & 16'h8000) == 16'h0000);
 
   assign inst_nop = en & ((inst >> 8) == 0);
+  assign inst_not = en & ((inst >> 8) == 7);
   assign inst_out_lo = en & ((inst >> 8) == 8);
 
   wire one_arg = en & ((inst & 16'hC000) == 16'h8000);

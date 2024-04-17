@@ -32,7 +32,7 @@ module cpu (
 
   wire [15:0] rhs;
   wire inst_nop, inst_load, inst_store, inst_add, inst_sub, inst_and, inst_or, inst_xor;
-  wire inst_branch, inst_if, inst_out_lo;
+  wire inst_branch, inst_if, inst_out_lo, inst_not;
   wire source_imm, source_ram;
   wire if_zero, if_not_zero, if_else, if_not_else;
   wire decoding = (state == ST_INST_EXEC0) | (state == ST_INST_EXEC1);
@@ -49,6 +49,7 @@ module cpu (
     .inst_and(inst_and),
     .inst_or(inst_or),
     .inst_xor(inst_xor),
+    .inst_not(inst_not),
     .inst_branch(inst_branch),
     .inst_if(inst_if),
     .inst_out_lo(inst_out_lo),
@@ -133,6 +134,13 @@ module cpu (
         if (inst_nop) begin
           pc <= pc + 1;
           state <= ST_INIT;
+        end else if (inst_not) begin
+          pc <= pc + 1;
+          state <= ST_INIT;
+          if (~skip) begin
+            accum <= ~accum;
+            zero <= (~accum) == 0;
+          end
         end else if (inst_load) begin
           if (skip) begin
             pc <= pc + 2;
