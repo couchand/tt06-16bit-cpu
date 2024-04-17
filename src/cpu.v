@@ -27,18 +27,20 @@ module cpu (
   reg [15:0] inst;
   reg [15:0] accum;
 
-  wire [15:0] constval;
+  wire [15:0] rhs;
   wire inst_nop, inst_load, inst_add, inst_out_lo, inst_unknown;
-  wire source_const;
+  wire source_imm, source_ram;
   decoder inst_decoder(
     .inst(inst),
-    .constval(constval),
+    .data(data_in),
+    .rhs(rhs),
     .inst_nop(inst_nop),
     .inst_load(inst_load),
     .inst_add(inst_add),
     .inst_out_lo(inst_out_lo),
     .inst_unknown(inst_unknown),
-    .source_const(source_const)
+    .source_imm(source_imm),
+    .source_ram(source_ram)
   );
 
   reg [8:0] state;
@@ -108,14 +110,14 @@ module cpu (
         end else if (inst_load) begin
           pc <= pc + 2;
           state <= ST_INIT;
-          if (source_const) begin
-            accum <= constval;
+          if (source_imm) begin
+            accum <= rhs;
           end
         end else if (inst_add) begin
           pc <= pc + 2;
           state <= ST_INIT;
-          if (source_const) begin
-            accum <= accum + constval;
+          if (source_imm) begin
+            accum <= accum + rhs;
           end
         end else if (inst_out_lo) begin
           pc <= pc + 1;
