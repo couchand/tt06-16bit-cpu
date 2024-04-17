@@ -157,9 +157,31 @@ async def test_project(dut):
     while dut.busy != 0:
       await ClockCycles(dut.clk, 10)
 
+    assert dut.halt.value == 0
+    assert dut.trap.value == 0
+
   await ClockCycles(dut.clk, 10)
 
   assert dut.uo_out.value == 9
+  assert dut.halt.value == 0
+  assert dut.trap.value == 0
+
+  await ClockCycles(dut.clk, 10)
+
+  # Memory Store
+
+  for step in range(0, 7):
+    dut.uio_in.value = 0x10
+    await ClockCycles(dut.clk, 10)
+    dut.uio_in.value = 0x00
+    await ClockCycles(dut.clk, 10)
+
+    while dut.busy != 0:
+      await ClockCycles(dut.clk, 10)
+
+  await ClockCycles(dut.clk, 10)
+
+  assert dut.uo_out.value == 39
   assert dut.halt.value == 0
   assert dut.trap.value == 0
 

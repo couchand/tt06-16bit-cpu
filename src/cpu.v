@@ -31,7 +31,7 @@ module cpu (
   reg skipped;
 
   wire [15:0] rhs;
-  wire inst_nop, inst_load, inst_add, inst_branch, inst_if, inst_out_lo;
+  wire inst_nop, inst_load, inst_store, inst_add, inst_branch, inst_if, inst_out_lo;
   wire source_imm, source_ram;
   wire if_zero, if_not_zero, if_else, if_not_else;
   wire decoding = (state == ST_INST_EXEC0) | (state == ST_INST_EXEC1);
@@ -42,6 +42,7 @@ module cpu (
     .rhs(rhs),
     .inst_nop(inst_nop),
     .inst_load(inst_load),
+    .inst_store(inst_store),
     .inst_add(inst_add),
     .inst_branch(inst_branch),
     .inst_if(inst_if),
@@ -72,10 +73,14 @@ module cpu (
     : ((state == ST_INST_EXEC0) & source_ram) ? rhs
     : 0;
   wire ram_start_read = (state == ST_LOAD_INST0) ? 1
-    : ((state == ST_INST_EXEC0) & source_ram) ? 1
+    : ((state == ST_INST_EXEC0) & source_ram & ~inst_store) ? 1
     : 0;
-  reg [15:0] ram_data_in;
-  reg ram_start_write;
+  wire [15:0] ram_data_in = ((state == ST_INST_EXEC0) & source_ram & inst_store)
+    ? accum
+    : 0;
+  wire ram_start_write = ((state == ST_INST_EXEC0) & source_ram & inst_store)
+    ? 1
+    : 0;
   wire [15:0] ram_data_out;
   wire ram_busy;
 
@@ -106,8 +111,6 @@ module cpu (
       zero <= 0;
       skip <= 0;
       skipped <= 0;
-      ram_data_in <= 0;
-      ram_start_write <= 0;
       data_out <= 0;
     end else if (~halt & ~trap) begin
       if (state == ST_INIT) begin
@@ -134,6 +137,15 @@ module cpu (
             zero <= rhs == 0;
             pc <= pc + 2;
             state <= ST_INIT;
+          end else if (source_ram) begin
+            state <= ST_INST_EXEC1;
+          end
+        end else if (inst_store) begin
+          if (skip) begin
+            pc <= pc + 2;
+            state <= ST_INIT;
+          end else if (source_imm) begin
+            state <= ST_TRAP;
           end else if (source_ram) begin
             state <= ST_INST_EXEC1;
           end
@@ -195,6 +207,9 @@ module cpu (
           end else if (inst_add) begin
             accum <= accum + ram_data_out;
             zero <= (accum + ram_data_out) == 0;
+            pc <= pc + 2;
+            state <= ST_INIT;
+          end else if (inst_store) begin
             pc <= pc + 2;
             state <= ST_INIT;
           end else begin
