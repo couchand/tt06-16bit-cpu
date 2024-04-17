@@ -46,7 +46,7 @@ module decoder (
   assign source_ram = !one_arg ? 0 : (inst & 16'h0400) == 16'h0400;
 
   assign rhs = !en ? 0
-    : inst_branch ? {{8{inst[10]}}, inst[10:0]}
+    : inst_branch ? {{6{inst[10]}}, inst[10:0]}
     : (inst & 16'h0700) == 16'h0000 ? {8'h00, inst[7:0]}
     : (inst & 16'h0700) == 16'h0100 ? {inst[7:0], 8'h00}
     : (inst & 16'h0700) == 16'h0200 ? {8'h00, data}
