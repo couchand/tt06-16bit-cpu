@@ -25,7 +25,22 @@ async def test_project(dut):
   dut.debug_addr.value = 0
   await ClockCycles(dut.clk, 10)
   dut.rst_n.value = 1
-
   await ClockCycles(dut.clk, 10)
+
+  dut.uio_in.value = 0x10
+  await ClockCycles(dut.clk, 10)
+  dut.uio_in.value = 0x00
+  await ClockCycles(dut.clk, 10)
+
+  while dut.uio_out.value & 0b00100000 != 0:
+    await ClockCycles(dut.clk, 10)
+
+  dut.uio_in.value = 0x10
+  await ClockCycles(dut.clk, 10)
+  dut.uio_in.value = 0x00
+  await ClockCycles(dut.clk, 10)
+
+  while dut.uio_out.value & 0b00100000 != 0:
+    await ClockCycles(dut.clk, 10)
 
   # TODO

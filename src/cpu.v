@@ -23,20 +23,39 @@ module cpu (
     output wire [7:0] data_out
 );
 
-  reg [1:0] state;
+  reg [15:0] pc;
+  reg [15:0] inst;
+  reg [15:0] accum;
+  reg [15:0] bside;
+
+  localparam INST_NOP = 0;
+  localparam INST_LOAD_IMM = 1;
+
+  wire executing_ram_inst = inst == INST_LOAD_IMM;
+
+  reg [8:0] state;
 
   localparam ST_INIT = 0;
   localparam ST_HALT = 1;
   localparam ST_TRAP = 2;
+  localparam ST_LOAD_INST0 = 3;
+  localparam ST_LOAD_INST1 = 4;
+  localparam ST_INST_EXEC0 = 5;
+  localparam ST_INST_EXEC1 = 6;
 
+  assign busy = state != ST_INIT & state != ST_HALT & state != ST_TRAP;
   assign halt = state == ST_HALT;
   assign trap = state == ST_TRAP;
 
   assign data_out = data_in;
 
-  reg [15:0] ram_addr;
+  wire [15:0] ram_addr = state == ST_LOAD_INST0 ? pc :
+    (state == ST_INST_EXEC0 & inst == INST_LOAD_IMM) ? pc + 2
+    : 0;
+  wire ram_start_read = state == ST_LOAD_INST0
+    | (state == ST_INST_EXEC0 & inst == INST_LOAD_IMM);
   reg [15:0] ram_data_in;
-  reg ram_start_read, ram_start_write;
+  reg ram_start_write;
   wire [15:0] ram_data_out;
   wire ram_busy;
 
@@ -61,10 +80,39 @@ module cpu (
   always @(posedge clk) begin
     if (!rst_n) begin
       state <= ST_INIT;
-      ram_addr <= 0;
+      pc <= 0;
+      inst <= 0;
+      accum <= 0;
+      bside <= 0;
       ram_data_in <= 0;
-      ram_start_read <= 0;
       ram_start_write <= 0;
+    end else if (~halt & ~trap) begin
+      if (state == ST_INIT) begin
+        if (step) begin
+          state <= ST_LOAD_INST0;
+        end
+      end else if (state == ST_LOAD_INST0) begin
+        state <= ST_LOAD_INST1;
+      end else if (state == ST_LOAD_INST1) begin
+        if (!ram_busy) begin
+          inst <= ram_data_out;
+          state <= ST_INST_EXEC0;
+        end
+      end else if (state == ST_INST_EXEC0) begin
+        case (inst)
+          INST_NOP: state <= ST_INIT;
+          INST_LOAD_IMM: state <= ST_INST_EXEC1;
+          default: state <= ST_TRAP;
+        endcase
+      end else if (state == ST_INST_EXEC1) begin
+        if (executing_ram_inst & !ram_busy) begin
+          if (inst == INST_LOAD_IMM) begin
+            accum <= ram_data_out;
+            pc <= pc + 4;
+            state <= ST_INIT;
+          end
+        end
+      end
     end
   end
 

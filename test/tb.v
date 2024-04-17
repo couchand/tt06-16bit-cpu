@@ -59,4 +59,6 @@ module tb ();
     .debug_data(debug_data)
   );
 
+  defparam spi_ram.INIT_FILE = "test.mem";
+
 endmodule

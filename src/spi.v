@@ -35,13 +35,13 @@ module spi_ram_controller #(parameter DATA_WIDTH_BYTES=4, parameter ADDR_BITS=16
     output                          busy
 );
 
-`ifdef COCOTB_SIM
-initial begin
-  $dumpfile ("spi.vcd");
-  $dumpvars (0, spi_ram_controller);
-  #1;
-end
-`endif
+//`ifdef COCOTB_SIM
+//initial begin
+//  $dumpfile ("spi.vcd");
+//  $dumpvars (0, spi_ram_controller);
+//  #1;
+//end
+//`endif
 
 `define max(a, b) (a > b) ? a : b
 
@@ -66,6 +66,10 @@ end
         if (!rstn) begin
             fsm_state <= FSM_IDLE;
             bits_remaining <= 0;
+
+            // couchand: added init for data & addr
+            data <= 0;
+            addr <= 0;
         end else begin
             if (fsm_state == FSM_IDLE) begin
                 if (start_read || start_write) begin
