@@ -31,7 +31,7 @@ module cpu (
   reg skipped;
 
   wire [15:0] rhs;
-  wire inst_nop, inst_load, inst_store, inst_add, inst_branch, inst_if, inst_out_lo;
+  wire inst_nop, inst_load, inst_store, inst_add, inst_sub, inst_branch, inst_if, inst_out_lo;
   wire source_imm, source_ram;
   wire if_zero, if_not_zero, if_else, if_not_else;
   wire decoding = (state == ST_INST_EXEC0) | (state == ST_INST_EXEC1);
@@ -44,6 +44,7 @@ module cpu (
     .inst_load(inst_load),
     .inst_store(inst_store),
     .inst_add(inst_add),
+    .inst_sub(inst_sub),
     .inst_branch(inst_branch),
     .inst_if(inst_if),
     .inst_out_lo(inst_out_lo),
@@ -161,6 +162,18 @@ module cpu (
           end else if (source_ram) begin
             state <= ST_INST_EXEC1;
           end
+        end else if (inst_sub) begin
+          if (skip) begin
+            pc <= pc + 2;
+            state <= ST_INIT;
+          end else if (source_imm) begin
+            accum <= accum - rhs;
+            zero <= (accum - rhs) == 0;
+            pc <= pc + 2;
+            state <= ST_INIT;
+          end else if (source_ram) begin
+            state <= ST_INST_EXEC1;
+          end
         end else if (inst_branch) begin
           state <= ST_INIT;
           if (skip) begin
@@ -207,6 +220,11 @@ module cpu (
           end else if (inst_add) begin
             accum <= accum + ram_data_out;
             zero <= (accum + ram_data_out) == 0;
+            pc <= pc + 2;
+            state <= ST_INIT;
+          end else if (inst_sub) begin
+            accum <= accum - ram_data_out;
+            zero <= (accum - ram_data_out) == 0;
             pc <= pc + 2;
             state <= ST_INIT;
           end else if (inst_store) begin

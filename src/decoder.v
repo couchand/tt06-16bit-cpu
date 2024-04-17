@@ -14,6 +14,7 @@ module decoder (
     output wire        inst_load,
     output wire        inst_store,
     output wire        inst_add,
+    output wire        inst_sub,
     output wire        inst_branch,
     output wire        inst_if,
     output wire        inst_out_lo,
@@ -35,6 +36,7 @@ module decoder (
   assign inst_load = en & ((inst & 16'hF800) == 16'h8000);
   assign inst_store = en & ((inst & 16'hF800) == 16'h9000);
   assign inst_add  = en & ((inst & 16'hF800) == 16'h8800);
+  assign inst_sub  = en & ((inst & 16'hF800) == 16'h9800);
 
   assign inst_branch = en & ((inst & 16'hF800) == 16'hC000);
   assign inst_if = en & ((inst & 16'hF800) == 16'hF000);

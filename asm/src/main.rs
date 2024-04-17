@@ -5,6 +5,7 @@ enum Opcode {
     Load(Source),
     Store(Source),
     Add(Source),
+    Sub(Source),
     Branch(Target),
     If(Condition),
 }
@@ -18,6 +19,7 @@ impl Opcode {
             Opcode::Load(s) => s.encode(0x80),
             Opcode::Store(s) => s.encode(0x90),
             Opcode::Add(s) => s.encode(0x88),
+            Opcode::Sub(s) => s.encode(0x98),
             Opcode::Branch(t) => t.encode(0xC0),
             Opcode::If(c) => c.encode(0xF0),
         }
@@ -146,6 +148,12 @@ fn main() {
         Opcode::OutLo,
         Opcode::Nop,
         Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Load(Source::Const(ByteInWord::Lo, 0xFF)),
+        Opcode::Sub(Source::Const(ByteInWord::Lo, 0xEE)),
+        Opcode::OutLo,
         Opcode::Nop,
         Opcode::Nop,
         Opcode::Nop,
