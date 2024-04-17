@@ -27,20 +27,15 @@ async def test_project(dut):
   dut.rst_n.value = 1
   await ClockCycles(dut.clk, 10)
 
-  dut.uio_in.value = 0x10
-  await ClockCycles(dut.clk, 10)
-  dut.uio_in.value = 0x00
-  await ClockCycles(dut.clk, 10)
-
-  while dut.uio_out.value & 0b00100000 != 0:
+  for i in range(0, 7):
+    dut.uio_in.value = 0x10
+    await ClockCycles(dut.clk, 10)
+    dut.uio_in.value = 0x00
     await ClockCycles(dut.clk, 10)
 
-  dut.uio_in.value = 0x10
-  await ClockCycles(dut.clk, 10)
-  dut.uio_in.value = 0x00
+    while dut.uio_out.value & 0b00100000 != 0:
+      await ClockCycles(dut.clk, 10)
+
   await ClockCycles(dut.clk, 10)
 
-  while dut.uio_out.value & 0b00100000 != 0:
-    await ClockCycles(dut.clk, 10)
-
-  # TODO
+  assert dut.uo_out.value == 50

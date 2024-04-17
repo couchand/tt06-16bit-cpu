@@ -20,18 +20,26 @@ module cpu (
     output wire       trap,
 
     input  wire [7:0] data_in,
-    output wire [7:0] data_out
+    output reg [7:0] data_out
 );
 
   reg [15:0] pc;
   reg [15:0] inst;
   reg [15:0] accum;
-  reg [15:0] bside;
 
-  localparam INST_NOP = 0;
-  localparam INST_LOAD_IMM = 1;
-
-  wire executing_ram_inst = inst == INST_LOAD_IMM;
+  wire [15:0] constval;
+  wire inst_nop, inst_load, inst_add, inst_out_lo, inst_unknown;
+  wire source_const;
+  decoder inst_decoder(
+    .inst(inst),
+    .constval(constval),
+    .inst_nop(inst_nop),
+    .inst_load(inst_load),
+    .inst_add(inst_add),
+    .inst_out_lo(inst_out_lo),
+    .inst_unknown(inst_unknown),
+    .source_const(source_const)
+  );
 
   reg [8:0] state;
 
@@ -47,13 +55,8 @@ module cpu (
   assign halt = state == ST_HALT;
   assign trap = state == ST_TRAP;
 
-  assign data_out = data_in;
-
-  wire [15:0] ram_addr = state == ST_LOAD_INST0 ? pc :
-    (state == ST_INST_EXEC0 & inst == INST_LOAD_IMM) ? pc + 2
-    : 0;
-  wire ram_start_read = state == ST_LOAD_INST0
-    | (state == ST_INST_EXEC0 & inst == INST_LOAD_IMM);
+  wire [15:0] ram_addr = state == ST_LOAD_INST0 ? pc : 0;
+  wire ram_start_read = state == ST_LOAD_INST0;
   reg [15:0] ram_data_in;
   reg ram_start_write;
   wire [15:0] ram_data_out;
@@ -83,9 +86,9 @@ module cpu (
       pc <= 0;
       inst <= 0;
       accum <= 0;
-      bside <= 0;
       ram_data_in <= 0;
       ram_start_write <= 0;
+      data_out <= 0;
     end else if (~halt & ~trap) begin
       if (state == ST_INIT) begin
         if (step) begin
@@ -99,18 +102,27 @@ module cpu (
           state <= ST_INST_EXEC0;
         end
       end else if (state == ST_INST_EXEC0) begin
-        case (inst)
-          INST_NOP: state <= ST_INIT;
-          INST_LOAD_IMM: state <= ST_INST_EXEC1;
-          default: state <= ST_TRAP;
-        endcase
-      end else if (state == ST_INST_EXEC1) begin
-        if (executing_ram_inst & !ram_busy) begin
-          if (inst == INST_LOAD_IMM) begin
-            accum <= ram_data_out;
-            pc <= pc + 4;
-            state <= ST_INIT;
+        if (inst_nop) begin
+          pc <= pc + 1;
+          state <= ST_INIT;
+        end else if (inst_load) begin
+          pc <= pc + 2;
+          state <= ST_INIT;
+          if (source_const) begin
+            accum <= constval;
           end
+        end else if (inst_add) begin
+          pc <= pc + 2;
+          state <= ST_INIT;
+          if (source_const) begin
+            accum <= accum + constval;
+          end
+        end else if (inst_out_lo) begin
+          pc <= pc + 1;
+          state <= ST_INIT;
+          data_out <= accum[7:0];
+        end else if (inst_unknown) begin
+          state <= ST_TRAP;
         end
       end
     end
