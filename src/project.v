@@ -1,9 +1,9 @@
 /*
- * Copyright (c) 2024 Your Name
+ * Copyright (c) 2024 Andrew Dona-Couch
  * SPDX-License-Identifier: Apache-2.0
  */
 
-`define default_netname none
+`default_nettype none
 
 module tt_um_couchand_16bit_cpu (
     input  wire [7:0] ui_in,    // Dedicated inputs
