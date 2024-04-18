@@ -45,7 +45,7 @@ module cpu (
     .accum(accum),
     .data(data_in),
     .rhs(rhs),
-    .bytes(inst_bytes),
+    .bytes(inst_bytes_raw),
     .inst_nop(inst_nop),
     .inst_halt(inst_halt),
     .inst_load(inst_load),
