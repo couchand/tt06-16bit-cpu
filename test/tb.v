@@ -51,13 +51,15 @@ module tb ();
       .rst_n  (rst_n)     // not reset
   );
 
-  reg enable_ops, enable_fib_memo;
+  reg enable_ops, enable_fib_memo, enable_fib_framed;
 
   wire spi_select_ops = spi_select & enable_ops;
   wire spi_select_fib_memo = spi_select & enable_fib_memo;
+  wire spi_select_fib_framed = spi_select & enable_fib_framed;
 
   assign spi_miso = enable_ops ? spi_miso_ops
     : enable_fib_memo ? spi_miso_fib_memo
+    : enable_fib_framed ? spi_miso_fib_framed
     : 0;
 
   reg debug_clk;
@@ -89,6 +91,20 @@ module tb ();
     .debug_clk(debug_clk),
     .debug_addr(debug_addr),
     .debug_data(debug_data_fib_memo)
+  );
+
+  wire [31:0] debug_data_fib_framed;
+  wire spi_miso_fib_framed;
+  sim_spi_ram #(
+    .INIT_FILE("fib_framed.mem")
+  ) spi_ram_fib_framed (
+    .spi_clk(spi_clk),
+    .spi_mosi(spi_mosi),
+    .spi_select(spi_select_fib_framed),
+    .spi_miso(spi_miso_fib_framed),
+    .debug_clk(debug_clk),
+    .debug_addr(debug_addr),
+    .debug_data(debug_data_fib_framed)
   );
 
 endmodule

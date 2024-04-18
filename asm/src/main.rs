@@ -4,6 +4,7 @@ enum Opcode {
     Halt,
     OutLo,
     Not,
+    SetDataPointer,
     LoadIndirect,// TODO: (AddressingMode),
     Load(Source),
     Store(Source),
@@ -20,10 +21,11 @@ impl Opcode {
     fn encode(&self) -> Encoded {
         match self {
             Opcode::Text(v) => Encoded::U8(*v),
-            Opcode::Nop => Encoded::U8(0),
-            Opcode::Halt => Encoded::U8(1),
-            Opcode::OutLo => Encoded::U8(8),
-            Opcode::Not => Encoded::U8(7),
+            Opcode::Nop => Encoded::U8(0x00),
+            Opcode::Halt => Encoded::U8(0x01),
+            Opcode::Not => Encoded::U8(0x07),
+            Opcode::OutLo => Encoded::U8(0x08),
+            Opcode::SetDataPointer => Encoded::U8(0x0A),
             //Opcode::LoadIndirect(m) => Encoded::U8(0x44 | m.encode()),
             Opcode::LoadIndirect => Encoded::U8(0x44),
             Opcode::Load(s) => s.encode(0x80),
@@ -42,7 +44,7 @@ impl Opcode {
 enum Source {
     Const(ByteInWord, u8),
     Data(ByteInWord),
-    Ram(AddressingMode, u8),
+    Ram(RelativeTo, AddressingMode, u8),
 }
 
 impl Source {
@@ -51,9 +53,29 @@ impl Source {
         res |= match self {
             Source::Const(b, c) => b.encode() | u16::from(*c),
             Source::Data(b) => 0x0200 | b.encode(),
-            Source::Ram(m, a) => 0x0400 | (u16::from(m.encode()) << 8) | u16::from(*a),
+            Source::Ram(r, m, a) => {
+                let opcode = 0x0400;
+                let relative = u16::from(r.encode()) << 8;
+                let mode = u16::from(m.encode()) << 8;
+                let addr = u16::from(*a);
+                opcode | relative | mode | addr
+            }
         };
         Encoded::U16(res)
+    }
+}
+
+enum RelativeTo {
+    DataPointer,
+    StackPointer,
+}
+
+impl RelativeTo {
+    fn encode(&self) -> u8 {
+        match self {
+            RelativeTo::DataPointer => 0,
+            RelativeTo::StackPointer => 2,
+        }
     }
 }
 
@@ -138,8 +160,8 @@ fn main() {
         Opcode::Add(Source::Const(ByteInWord::Lo, 0x1e)),
         Opcode::OutLo,
         Opcode::Nop,
-        Opcode::Load(Source::Ram(AddressingMode::Direct, 0x20)),
-        Opcode::Add(Source::Ram(AddressingMode::Direct, 0x22)),
+        Opcode::Load(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, 0x20)),
+        Opcode::Add(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, 0x22)),
         Opcode::OutLo,
         Opcode::Nop,
         Opcode::Branch(Target::I11(0x0010)),
@@ -168,10 +190,10 @@ fn main() {
         Opcode::If(Condition::NotZero),
         Opcode::Branch(Target::I11(0x07F8)),
         Opcode::Load(Source::Const(ByteInWord::Lo, 0x09)),
-        Opcode::Store(Source::Ram(AddressingMode::Direct, 0x20)),
+        Opcode::Store(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, 0x20)),
         Opcode::Load(Source::Const(ByteInWord::Lo, 0x33)),
-        Opcode::Load(Source::Ram(AddressingMode::Direct, 0x20)),
-        Opcode::Add(Source::Ram(AddressingMode::Direct, 0x22)),
+        Opcode::Load(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, 0x20)),
+        Opcode::Add(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, 0x22)),
         Opcode::OutLo,
         Opcode::Nop,
         Opcode::Nop,
@@ -209,9 +231,9 @@ fn main() {
         Opcode::LoadIndirect,
         Opcode::OutLo,
         Opcode::Load(Source::Const(ByteInWord::Lo, 0x22)),
-        Opcode::Store(Source::Ram(AddressingMode::Direct, 0x1E)),
+        Opcode::Store(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, 0x1E)),
         Opcode::Load(Source::Const(ByteInWord::Lo, 0)),
-        Opcode::Load(Source::Ram(AddressingMode::Indirect, 0x1E)),
+        Opcode::Load(Source::Ram(RelativeTo::DataPointer, AddressingMode::Indirect, 0x1E)),
         Opcode::OutLo,
         Opcode::Nop,
         Opcode::Nop,
@@ -244,45 +266,45 @@ fn main() {
 
     let fib_memo_insts = [
         Opcode::Load(Source::Data(ByteInWord::Lo)),
-        Opcode::Store(Source::Ram(AddressingMode::Direct, target)),
+        Opcode::Store(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, target)),
         Opcode::Load(Source::Const(ByteInWord::Lo, 1)),
-        Opcode::Store(Source::Ram(AddressingMode::Direct, cache)),
+        Opcode::Store(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, cache)),
         Opcode::Load(Source::Const(ByteInWord::Lo, 1)),
-        Opcode::Store(Source::Ram(AddressingMode::Direct, cache + 2)),
-        Opcode::Load(Source::Ram(AddressingMode::Direct, target)),
+        Opcode::Store(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, cache + 2)),
+        Opcode::Load(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, target)),
         Opcode::If(Condition::Zero),
         Opcode::Branch(Target::I11(done - br0)),
         Opcode::Sub(Source::Const(ByteInWord::Lo, 1)),
         Opcode::If(Condition::Zero),
         Opcode::Branch(Target::I11(done - br1)),
         Opcode::Load(Source::Const(ByteInWord::Lo, 2)),
-        Opcode::Store(Source::Ram(AddressingMode::Direct, current)),
+        Opcode::Store(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, current)),
         // loop
-        Opcode::Load(Source::Ram(AddressingMode::Direct, current)),
-        Opcode::Add(Source::Ram(AddressingMode::Direct, current)),
+        Opcode::Load(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, current)),
+        Opcode::Add(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, current)),
         Opcode::Add(Source::Const(ByteInWord::Lo, cache)),
-        Opcode::Store(Source::Ram(AddressingMode::Direct, cursor)),
+        Opcode::Store(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, cursor)),
         Opcode::Sub(Source::Const(ByteInWord::Lo, 2)),
         Opcode::LoadIndirect,
-        Opcode::Store(Source::Ram(AddressingMode::Indirect, cursor)),
-        Opcode::Load(Source::Ram(AddressingMode::Direct, cursor)),
+        Opcode::Store(Source::Ram(RelativeTo::DataPointer, AddressingMode::Indirect, cursor)),
+        Opcode::Load(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, cursor)),
         Opcode::Sub(Source::Const(ByteInWord::Lo, 4)),
         Opcode::LoadIndirect,
-        Opcode::Add(Source::Ram(AddressingMode::Indirect, cursor)),
-        Opcode::Store(Source::Ram(AddressingMode::Indirect, cursor)),
+        Opcode::Add(Source::Ram(RelativeTo::DataPointer, AddressingMode::Indirect, cursor)),
+        Opcode::Store(Source::Ram(RelativeTo::DataPointer, AddressingMode::Indirect, cursor)),
         Opcode::OutLo,
         Opcode::Nop,
-        Opcode::Load(Source::Ram(AddressingMode::Direct, target)),
-        Opcode::Sub(Source::Ram(AddressingMode::Direct, current)),
+        Opcode::Load(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, target)),
+        Opcode::Sub(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, current)),
         Opcode::If(Condition::Zero),
         Opcode::Branch(Target::I11(done - br2)),
-        Opcode::Load(Source::Ram(AddressingMode::Direct, current)),
+        Opcode::Load(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, current)),
         Opcode::Add(Source::Const(ByteInWord::Lo, 1)),
-        Opcode::Store(Source::Ram(AddressingMode::Direct, current)),
+        Opcode::Store(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, current)),
         Opcode::Branch(Target::I11(loop_label - br3)),
         // done
-        Opcode::Load(Source::Ram(AddressingMode::Direct, target)),
-        Opcode::Add(Source::Ram(AddressingMode::Direct, target)),
+        Opcode::Load(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, target)),
+        Opcode::Add(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, target)),
         Opcode::Add(Source::Const(ByteInWord::Lo, cache)),
         Opcode::LoadIndirect,
         Opcode::OutLo,
@@ -324,8 +346,109 @@ fn main() {
         Opcode::Nop,
     ];
 
+    let target_abs = 0x60;
+    let target = 0x00;
+    let current = 0x02;
+    let cursor = 0x04;
+    let pointer = 0x06;
+    let cache = 0x08;
+
+    let br0 = 0x16;
+    let br1 = 0x1C;
+    let loop_label = 0x20;
+    let br2 = 0x46;
+    let br3 = 0x4E;
+    let done = 0x4E;
+
+    let fib_framed_insts = [
+        Opcode::Load(Source::Data(ByteInWord::Lo)),
+        Opcode::Store(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, target_abs)),
+        Opcode::Load(Source::Const(ByteInWord::Lo, target_abs)),
+        Opcode::SetDataPointer,
+        Opcode::Nop,
+        Opcode::Load(Source::Const(ByteInWord::Lo, 1)),
+        Opcode::Store(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, cache)),
+        Opcode::Load(Source::Const(ByteInWord::Lo, 1)),
+        Opcode::Store(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, cache + 2)),
+        Opcode::Load(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, target)),
+        Opcode::If(Condition::Zero),
+        Opcode::Branch(Target::I11(done - br0)),
+        Opcode::Sub(Source::Const(ByteInWord::Lo, 1)),
+        Opcode::If(Condition::Zero),
+        Opcode::Branch(Target::I11(done - br1)),
+        Opcode::Load(Source::Const(ByteInWord::Lo, 2)),
+        Opcode::Store(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, current)),
+        // loop
+        Opcode::Load(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, current)),
+        Opcode::Add(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, current)),
+        Opcode::Add(Source::Const(ByteInWord::Lo, cache)),
+        Opcode::Store(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, cursor)),
+        Opcode::Add(Source::Const(ByteInWord::Lo, target_abs)),
+        Opcode::Store(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, pointer)),
+        Opcode::Load(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, cursor)),
+        Opcode::Sub(Source::Const(ByteInWord::Lo, 2)),
+        Opcode::LoadIndirect,
+        Opcode::Store(Source::Ram(RelativeTo::DataPointer, AddressingMode::Indirect, pointer)),
+        Opcode::Load(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, cursor)),
+        Opcode::Sub(Source::Const(ByteInWord::Lo, 4)),
+        Opcode::LoadIndirect,
+        Opcode::Add(Source::Ram(RelativeTo::DataPointer, AddressingMode::Indirect, pointer)),
+        Opcode::Store(Source::Ram(RelativeTo::DataPointer, AddressingMode::Indirect, pointer)),
+        Opcode::OutLo,
+        Opcode::Nop,
+        Opcode::Load(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, target)),
+        Opcode::Sub(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, current)),
+        Opcode::If(Condition::Zero),
+        Opcode::Branch(Target::I11(done - br2)),
+        Opcode::Load(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, current)),
+        Opcode::Add(Source::Const(ByteInWord::Lo, 1)),
+        Opcode::Store(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, current)),
+        Opcode::Branch(Target::I11(loop_label - br3)),
+        // done
+        Opcode::Load(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, target)),
+        Opcode::Add(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, target)),
+        Opcode::Add(Source::Const(ByteInWord::Lo, cache)),
+        Opcode::LoadIndirect,
+        Opcode::OutLo,
+        Opcode::Halt,
+        // target
+        Opcode::Nop,
+        Opcode::Nop,
+        // current
+        Opcode::Nop,
+        Opcode::Nop,
+        // cursor
+        Opcode::Nop,
+        Opcode::Nop,
+        // cache
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+    ];
+
     run("../test/ops.mem", &ops_insts).unwrap();
     run("../test/fib_memo.mem", &fib_memo_insts).unwrap();
+    run("../test/fib_framed.mem", &fib_framed_insts).unwrap();
 
     fn run(filename: &str, insts: &[Opcode]) -> std::io::Result<()> {
         let encoded = insts.iter().map(|i| i.encode()).collect::<Vec<_>>();

@@ -25,9 +25,12 @@ module decoder (
     output wire        inst_branch,
     output wire        inst_if,
     output wire        inst_out_lo,
+    output wire        inst_set_dp,
     output wire        source_imm,
     output wire        source_ram,
     output wire        source_indirect,
+    output wire        relative_data,
+    output wire        relative_stack,
     output wire        if_zero,
     output wire        if_not_zero,
     output wire        if_else,
@@ -36,10 +39,11 @@ module decoder (
 
   wire zero_arg = en & ((inst & 16'h8000) == 16'h0000);
 
-  assign inst_nop = en & ((inst >> 8) == 0);
-  assign inst_halt = en & ((inst >> 8) == 1);
-  assign inst_not = en & ((inst >> 8) == 7);
-  assign inst_out_lo = en & ((inst >> 8) == 8);
+  assign inst_nop = en & ((inst >> 8) == 16'h0000);
+  assign inst_halt = en & ((inst >> 8) == 16'h0001);
+  assign inst_not = en & ((inst >> 8) == 16'h0007);
+  assign inst_out_lo = en & ((inst >> 8) == 16'h0008);
+  assign inst_set_dp = en & ((inst >> 8) == 16'h000A);
   wire inst_load_indirect = en & ((inst >> 8) == 16'h0044);
 
   assign bytes = zero_arg ? 1 : 2;
@@ -62,9 +66,16 @@ module decoder (
   wire source_data  = !one_arg ? 0 : (inst & 16'h0600) == 16'h0200;
 
   assign source_imm = source_const | source_data;
-  assign source_ram = one_arg ? (inst & 16'h0700) == 16'h0400
+  assign source_ram = one_arg ? (inst & 16'h0500) == 16'h0400
     : inst_load_indirect;
-  assign source_indirect = one_arg & ((inst & 16'h0700) == 16'h0500);
+  assign source_indirect = one_arg & ((inst & 16'h0500) == 16'h0500);
+
+  assign relative_data = (source_ram | source_indirect)
+    ? (inst & 16'h0200) == 16'h0000
+    : 0;
+  assign relative_stack = (source_ram | source_indirect)
+    ? (inst & 16'h0200) == 16'h0200
+    : 0;
 
   assign rhs = !en ? 0
     : inst_branch ? {{5{inst[10]}}, inst[10:0]}
@@ -73,8 +84,7 @@ module decoder (
     : (inst & 16'h0700) == 16'h0100 ? {inst[7:0], 8'h00}
     : (inst & 16'h0700) == 16'h0200 ? {8'h00, data}
     : (inst & 16'h0700) == 16'h0300 ? {data, 8'h00}
-    : (inst & 16'h0700) == 16'h0400 ? {8'h00, inst[7:0]}
-    : (inst & 16'h0700) == 16'h0500 ? {8'h00, inst[7:0]}
+    : (inst & 16'h0400) == 16'h0400 ? {8'h00, inst[7:0]}
     : 0;
 
   assign if_zero = !inst_if ? 0

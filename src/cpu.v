@@ -26,6 +26,8 @@ module cpu (
   reg [15:0] pc;
   reg [15:0] inst;
   reg [15:0] accum;
+  reg [15:0] dp;
+  reg [15:0] sp;
   reg zero;
   reg skip;
   reg skipped;
@@ -34,8 +36,9 @@ module cpu (
   wire [1:0] inst_bytes_raw;
   wire [15:0] inst_bytes = {14'b0, inst_bytes_raw};
   wire inst_nop, inst_load, inst_store, inst_add, inst_sub, inst_and, inst_or, inst_xor;
-  wire inst_branch, inst_if, inst_out_lo, inst_not, inst_halt;
+  wire inst_branch, inst_if, inst_out_lo, inst_not, inst_halt, inst_set_dp;
   wire source_imm, source_ram, source_indirect;
+  wire relative_stack, relative_data;
   wire if_zero, if_not_zero, if_else, if_not_else;
   wire decoding = (state == ST_INST_EXEC0) | (state == ST_INST_EXEC1)
     | (state == ST_INST_EXEC2) | (state == ST_INST_EXEC3);
@@ -59,9 +62,12 @@ module cpu (
     .inst_branch(inst_branch),
     .inst_if(inst_if),
     .inst_out_lo(inst_out_lo),
+    .inst_set_dp(inst_set_dp),
     .source_imm(source_imm),
     .source_ram(source_ram),
     .source_indirect(source_indirect),
+    .relative_stack(relative_stack),
+    .relative_data(relative_data),
     .if_zero(if_zero),
     .if_not_zero(if_not_zero),
     .if_else(if_else),
@@ -85,7 +91,8 @@ module cpu (
   assign trap = state == ST_TRAP;
 
   wire [15:0] ram_addr = (state == ST_LOAD_INST0) ? pc
-    : ((state == ST_INST_EXEC0) & (source_ram | source_indirect)) ? rhs
+    : ((state == ST_INST_EXEC0) & (source_ram | source_indirect))
+      ? ((relative_stack ? sp : relative_data ? dp : 0) + rhs)
     : ((state == ST_INST_EXEC2) & source_indirect) ? ram_data_out
     : 0;
   wire ram_start_read = (state == ST_LOAD_INST0) ? 1
@@ -125,6 +132,8 @@ module cpu (
       pc <= 0;
       inst <= 0;
       accum <= 0;
+      dp <= 0;
+      sp <= 0;
       zero <= 0;
       skip <= 0;
       skipped <= 0;
@@ -151,6 +160,12 @@ module cpu (
             state <= ST_INIT;
           end else begin
             state <= ST_HALT;
+          end
+        end else if (inst_set_dp) begin
+          pc <= pc + inst_bytes;
+          state <= ST_INIT;
+          if (~skip) begin
+            dp <= accum;
           end
         end else if (inst_not) begin
           pc <= pc + inst_bytes;
