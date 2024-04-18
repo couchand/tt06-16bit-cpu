@@ -24,6 +24,8 @@ module decoder (
     output wire        inst_not,
     output wire        inst_branch,
     output wire        inst_if,
+    output wire        inst_push,
+    output wire        inst_pop,
     output wire        inst_out_lo,
     output wire        inst_set_dp,
     output wire        source_imm,
@@ -41,6 +43,8 @@ module decoder (
 
   assign inst_nop = en & ((inst >> 8) == 16'h0000);
   assign inst_halt = en & ((inst >> 8) == 16'h0001);
+  assign inst_push = en & ((inst >> 8) == 16'h0004);
+  assign inst_pop = en & ((inst >> 8) == 16'h0005);
   assign inst_not = en & ((inst >> 8) == 16'h0007);
   assign inst_out_lo = en & ((inst >> 8) == 16'h0008);
   assign inst_set_dp = en & ((inst >> 8) == 16'h000A);

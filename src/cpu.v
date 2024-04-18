@@ -36,7 +36,7 @@ module cpu (
   wire [1:0] inst_bytes_raw;
   wire [15:0] inst_bytes = {14'b0, inst_bytes_raw};
   wire inst_nop, inst_load, inst_store, inst_add, inst_sub, inst_and, inst_or, inst_xor;
-  wire inst_branch, inst_if, inst_out_lo, inst_not, inst_halt, inst_set_dp;
+  wire inst_branch, inst_if, inst_out_lo, inst_push, inst_pop, inst_not, inst_halt, inst_set_dp;
   wire source_imm, source_ram, source_indirect;
   wire relative_stack, relative_data;
   wire if_zero, if_not_zero, if_else, if_not_else;
@@ -61,6 +61,8 @@ module cpu (
     .inst_not(inst_not),
     .inst_branch(inst_branch),
     .inst_if(inst_if),
+    .inst_push(inst_push),
+    .inst_pop(inst_pop),
     .inst_out_lo(inst_out_lo),
     .inst_set_dp(inst_set_dp),
     .source_imm(source_imm),
@@ -90,19 +92,26 @@ module cpu (
   assign halt = state == ST_HALT;
   assign trap = state == ST_TRAP;
 
+  wire [15:0] sp_minus_two = sp - 2;
+
   wire [15:0] ram_addr = (state == ST_LOAD_INST0) ? pc
+    : ((state == ST_INST_EXEC0) & inst_push) ? sp_minus_two
+    : ((state == ST_INST_EXEC0) & inst_pop) ? sp
     : ((state == ST_INST_EXEC0) & (source_ram | source_indirect))
       ? ((relative_stack ? sp : relative_data ? dp : 0) + rhs)
     : ((state == ST_INST_EXEC2) & source_indirect) ? ram_data_out
     : 0;
   wire ram_start_read = (state == ST_LOAD_INST0) ? 1
     : ((state == ST_INST_EXEC0) & ((source_ram & ~inst_store) | source_indirect)) ? 1
+    : ((state == ST_INST_EXEC0) & inst_pop) ? 1
     : ((state == ST_INST_EXEC2) & source_indirect) ? 1
     : 0;
   wire [15:0] ram_data_in = ((state == ST_INST_EXEC0) & source_ram & inst_store) ? accum
+    : ((state == ST_INST_EXEC0) & inst_push) ? accum
     : ((state == ST_INST_EXEC2) & source_indirect & inst_store) ? accum
     : 0;
   wire ram_start_write = ((state == ST_INST_EXEC0) & source_ram & inst_store) ? 1
+    : ((state == ST_INST_EXEC0) & inst_push) ? 1
     : ((state == ST_INST_EXEC2) & source_indirect & inst_store) ? 1
     : 0;
   wire [15:0] ram_data_out;
@@ -167,6 +176,8 @@ module cpu (
           if (~skip) begin
             dp <= accum;
           end
+        end else if (inst_push | inst_pop) begin
+          state <= ST_INST_EXEC1;
         end else if (inst_not) begin
           pc <= pc + inst_bytes;
           state <= ST_INIT;
@@ -293,7 +304,17 @@ module cpu (
 
       end else if (state == ST_INST_EXEC1) begin
         if (!ram_busy) begin
-          if (source_ram) begin
+          if (inst_push) begin
+            sp <= sp_minus_two;
+            state <= ST_INIT;
+            pc <= pc + inst_bytes;
+          end else if (inst_pop) begin
+            sp <= sp + 2;
+            accum <= ram_data_out;
+            zero <= ram_data_out == 0;
+            state <= ST_INIT;
+            pc <= pc + inst_bytes;
+          end else if (source_ram) begin
             if (inst_load) begin
               accum <= ram_data_out;
               zero <= ram_data_out == 0;
