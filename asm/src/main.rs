@@ -287,6 +287,7 @@ fn main() {
         Opcode::OutHi,
         Opcode::Nop,
         Opcode::Nop,
+        Opcode::Trap,
         Opcode::Nop,
         Opcode::Nop,
         Opcode::Nop,

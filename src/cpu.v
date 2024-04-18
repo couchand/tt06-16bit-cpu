@@ -93,6 +93,7 @@ module cpu (
   localparam ST_INST_EXEC1 = 6;
   localparam ST_INST_EXEC2 = 7;
   localparam ST_INST_EXEC3 = 8;
+  localparam ST_UNTRAP = 9;
 
   assign busy = state != ST_INIT & state != ST_HALT & state != ST_TRAP;
   assign halt = state == ST_HALT;
@@ -154,11 +155,17 @@ module cpu (
       skip <= 0;
       skipped <= 0;
       data_out <= 0;
-    end else if (~halt & ~trap) begin
+    end else if (~halt) begin
       if (state == ST_INIT) begin
         if (step) begin
           state <= ST_LOAD_INST0;
         end
+      end else if (state == ST_TRAP) begin
+        if (step) begin
+          state <= ST_UNTRAP;
+        end
+      end else if (state == ST_UNTRAP) begin
+        state <= ST_INIT;
       end else if (state == ST_LOAD_INST0) begin
         state <= ST_LOAD_INST1;
       end else if (state == ST_LOAD_INST1) begin
