@@ -34,9 +34,10 @@ module cpu (
   wire [1:0] inst_bytes;
   wire inst_nop, inst_load, inst_store, inst_add, inst_sub, inst_and, inst_or, inst_xor;
   wire inst_branch, inst_if, inst_out_lo, inst_not;
-  wire source_imm, source_ram;
+  wire source_imm, source_ram, source_indirect;
   wire if_zero, if_not_zero, if_else, if_not_else;
-  wire decoding = (state == ST_INST_EXEC0) | (state == ST_INST_EXEC1);
+  wire decoding = (state == ST_INST_EXEC0) | (state == ST_INST_EXEC1)
+    | (state == ST_INST_EXEC2) | (state == ST_INST_EXEC3);
   decoder inst_decoder(
     .en(decoding),
     .inst(inst),
@@ -58,6 +59,7 @@ module cpu (
     .inst_out_lo(inst_out_lo),
     .source_imm(source_imm),
     .source_ram(source_ram),
+    .source_indirect(source_indirect),
     .if_zero(if_zero),
     .if_not_zero(if_not_zero),
     .if_else(if_else),
@@ -73,22 +75,26 @@ module cpu (
   localparam ST_LOAD_INST1 = 4;
   localparam ST_INST_EXEC0 = 5;
   localparam ST_INST_EXEC1 = 6;
+  localparam ST_INST_EXEC2 = 7;
+  localparam ST_INST_EXEC3 = 8;
 
   assign busy = state != ST_INIT & state != ST_HALT & state != ST_TRAP;
   assign halt = state == ST_HALT;
   assign trap = state == ST_TRAP;
 
   wire [15:0] ram_addr = (state == ST_LOAD_INST0) ? pc
-    : ((state == ST_INST_EXEC0) & source_ram) ? rhs
+    : ((state == ST_INST_EXEC0) & (source_ram | source_indirect)) ? rhs
+    : ((state == ST_INST_EXEC2) & source_indirect) ? ram_data_out
     : 0;
   wire ram_start_read = (state == ST_LOAD_INST0) ? 1
-    : ((state == ST_INST_EXEC0) & source_ram & ~inst_store) ? 1
+    : ((state == ST_INST_EXEC0) & (source_ram | source_indirect) & ~inst_store) ? 1
+    : ((state == ST_INST_EXEC2) & source_indirect) ? 1
     : 0;
-  wire [15:0] ram_data_in = ((state == ST_INST_EXEC0) & source_ram & inst_store)
-    ? accum
+  wire [15:0] ram_data_in = ((state == ST_INST_EXEC0) & source_ram & inst_store) ? accum
+    : ((state == ST_INST_EXEC2) & source_indirect & inst_store) ? accum
     : 0;
-  wire ram_start_write = ((state == ST_INST_EXEC0) & source_ram & inst_store)
-    ? 1
+  wire ram_start_write = ((state == ST_INST_EXEC0) & source_ram & inst_store) ? 1
+    : ((state == ST_INST_EXEC2) & source_indirect & inst_store) ? 1
     : 0;
   wire [15:0] ram_data_out;
   wire ram_busy;
@@ -153,7 +159,7 @@ module cpu (
             zero <= rhs == 0;
             pc <= pc + inst_bytes;
             state <= ST_INIT;
-          end else if (source_ram) begin
+          end else if (source_ram | source_indirect) begin
             state <= ST_INST_EXEC1;
           end
         end else if (inst_store) begin
@@ -162,7 +168,7 @@ module cpu (
             state <= ST_INIT;
           end else if (source_imm) begin
             state <= ST_TRAP;
-          end else if (source_ram) begin
+          end else if (source_ram | source_indirect) begin
             state <= ST_INST_EXEC1;
           end
         end else if (inst_add) begin
@@ -174,7 +180,7 @@ module cpu (
             zero <= (accum + rhs) == 0;
             pc <= pc + inst_bytes;
             state <= ST_INIT;
-          end else if (source_ram) begin
+          end else if (source_ram | source_indirect) begin
             state <= ST_INST_EXEC1;
           end
         end else if (inst_sub) begin
@@ -186,7 +192,7 @@ module cpu (
             zero <= (accum - rhs) == 0;
             pc <= pc + inst_bytes;
             state <= ST_INIT;
-          end else if (source_ram) begin
+          end else if (source_ram | source_indirect) begin
             state <= ST_INST_EXEC1;
           end
         end else if (inst_and) begin
@@ -198,7 +204,7 @@ module cpu (
             zero <= (accum & rhs) == 0;
             pc <= pc + inst_bytes;
             state <= ST_INIT;
-          end else if (source_ram) begin
+          end else if (source_ram | source_indirect) begin
             state <= ST_INST_EXEC1;
           end
         end else if (inst_or) begin
@@ -210,7 +216,7 @@ module cpu (
             zero <= (accum | rhs) == 0;
             pc <= pc + inst_bytes;
             state <= ST_INIT;
-          end else if (source_ram) begin
+          end else if (source_ram | source_indirect) begin
             state <= ST_INST_EXEC1;
           end
         end else if (inst_xor) begin
@@ -222,7 +228,7 @@ module cpu (
             zero <= (accum ^ rhs) == 0;
             pc <= pc + inst_bytes;
             state <= ST_INIT;
-          end else if (source_ram) begin
+          end else if (source_ram | source_indirect) begin
             state <= ST_INST_EXEC1;
           end
         end else if (inst_branch) begin
@@ -262,6 +268,53 @@ module cpu (
         skipped <= skip;
 
       end else if (state == ST_INST_EXEC1) begin
+        if (!ram_busy) begin
+          if (source_ram) begin
+            if (inst_load) begin
+              accum <= ram_data_out;
+              zero <= ram_data_out == 0;
+              pc <= pc + inst_bytes;
+              state <= ST_INIT;
+            end else if (inst_add) begin
+              accum <= accum + ram_data_out;
+              zero <= (accum + ram_data_out) == 0;
+              pc <= pc + inst_bytes;
+              state <= ST_INIT;
+            end else if (inst_sub) begin
+              accum <= accum - ram_data_out;
+              zero <= (accum - ram_data_out) == 0;
+              pc <= pc + inst_bytes;
+              state <= ST_INIT;
+            end else if (inst_and) begin
+              accum <= accum & ram_data_out;
+              zero <= (accum & ram_data_out) == 0;
+              pc <= pc + inst_bytes;
+              state <= ST_INIT;
+            end else if (inst_or) begin
+              accum <= accum | ram_data_out;
+              zero <= (accum | ram_data_out) == 0;
+              pc <= pc + inst_bytes;
+              state <= ST_INIT;
+            end else if (inst_xor) begin
+              accum <= accum ^ ram_data_out;
+              zero <= (accum ^ ram_data_out) == 0;
+              pc <= pc + inst_bytes;
+              state <= ST_INIT;
+            end else if (inst_store) begin
+              pc <= pc + inst_bytes;
+              state <= ST_INIT;
+            end else begin
+              state <= ST_TRAP;
+            end
+          end else if (source_indirect) begin
+            state <= ST_INST_EXEC2;
+          end else begin
+            state <= ST_TRAP;
+          end
+        end
+      end else if (state == ST_INST_EXEC2) begin
+        state <= ST_INST_EXEC3;
+      end else if (state == ST_INST_EXEC3) begin
         if (!ram_busy) begin
           if (inst_load) begin
             accum <= ram_data_out;

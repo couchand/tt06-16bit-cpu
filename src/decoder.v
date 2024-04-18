@@ -26,6 +26,7 @@ module decoder (
     output wire        inst_out_lo,
     output wire        source_imm,
     output wire        source_ram,
+    output wire        source_indirect,
     output wire        if_zero,
     output wire        if_not_zero,
     output wire        if_else,
@@ -59,8 +60,9 @@ module decoder (
   wire source_data  = !one_arg ? 0 : (inst & 16'h0600) == 16'h0200;
 
   assign source_imm = source_const | source_data;
-  assign source_ram = one_arg ? (inst & 16'h0400) == 16'h0400
+  assign source_ram = one_arg ? (inst & 16'h0700) == 16'h0400
     : inst_load_indirect;
+  assign source_indirect = one_arg & ((inst & 16'h0700) == 16'h0500);
 
   assign rhs = !en ? 0
     : inst_branch ? {{5{inst[10]}}, inst[10:0]}
@@ -70,6 +72,7 @@ module decoder (
     : (inst & 16'h0700) == 16'h0200 ? {8'h00, data}
     : (inst & 16'h0700) == 16'h0300 ? {data, 8'h00}
     : (inst & 16'h0700) == 16'h0400 ? {8'h00, inst[7:0]}
+    : (inst & 16'h0700) == 16'h0500 ? {8'h00, inst[7:0]}
     : 0;
 
   assign if_zero = !inst_if ? 0

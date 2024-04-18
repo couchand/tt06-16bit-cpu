@@ -3,7 +3,7 @@ enum Opcode {
     Nop,
     OutLo,
     Not,
-    LoadIndirect,
+    LoadIndirect(AddressingMode),
     Load(Source),
     Store(Source),
     Add(Source),
@@ -22,7 +22,7 @@ impl Opcode {
             Opcode::Nop => Encoded::U8(0),
             Opcode::OutLo => Encoded::U8(8),
             Opcode::Not => Encoded::U8(7),
-            Opcode::LoadIndirect => Encoded::U8(0x44),
+            Opcode::LoadIndirect(m) => Encoded::U8(0x44 | m.encode()),
             Opcode::Load(s) => s.encode(0x80),
             Opcode::Store(s) => s.encode(0x90),
             Opcode::Add(s) => s.encode(0x88),
@@ -39,7 +39,7 @@ impl Opcode {
 enum Source {
     Const(ByteInWord, u8),
     Data(ByteInWord),
-    Ram(u8),
+    Ram(AddressingMode, u8),
 }
 
 impl Source {
@@ -48,9 +48,23 @@ impl Source {
         res |= match self {
             Source::Const(b, c) => b.encode() | u16::from(*c),
             Source::Data(b) => 0x0200 | b.encode(),
-            Source::Ram(a) => 0x0400 | u16::from(*a),
+            Source::Ram(m, a) => 0x0400 | (u16::from(m.encode()) << 8) | u16::from(*a),
         };
         Encoded::U16(res)
+    }
+}
+
+enum AddressingMode {
+    Direct,
+    Indirect,
+}
+
+impl AddressingMode {
+    fn encode(&self) -> u8 {
+        match self {
+            AddressingMode::Direct => 0,
+            AddressingMode::Indirect => 1,
+        }
     }
 }
 
@@ -121,8 +135,8 @@ fn main() {
         Opcode::Add(Source::Const(ByteInWord::Lo, 0x1e)),
         Opcode::OutLo,
         Opcode::Nop,
-        Opcode::Load(Source::Ram(0x20)),
-        Opcode::Add(Source::Ram(0x22)),
+        Opcode::Load(Source::Ram(AddressingMode::Direct, 0x20)),
+        Opcode::Add(Source::Ram(AddressingMode::Direct, 0x22)),
         Opcode::OutLo,
         Opcode::Nop,
         Opcode::Branch(Target::I11(0x0010)),
@@ -151,10 +165,10 @@ fn main() {
         Opcode::If(Condition::NotZero),
         Opcode::Branch(Target::I11(0x07F8)),
         Opcode::Load(Source::Const(ByteInWord::Lo, 0x09)),
-        Opcode::Store(Source::Ram(0x20)),
+        Opcode::Store(Source::Ram(AddressingMode::Direct, 0x20)),
         Opcode::Load(Source::Const(ByteInWord::Lo, 0x33)),
-        Opcode::Load(Source::Ram(0x20)),
-        Opcode::Add(Source::Ram(0x22)),
+        Opcode::Load(Source::Ram(AddressingMode::Direct, 0x20)),
+        Opcode::Add(Source::Ram(AddressingMode::Direct, 0x22)),
         Opcode::OutLo,
         Opcode::Nop,
         Opcode::Nop,
@@ -189,8 +203,16 @@ fn main() {
         Opcode::Not,
         Opcode::OutLo,
         Opcode::Load(Source::Const(ByteInWord::Lo, 0x20)),
-        Opcode::LoadIndirect,
+        Opcode::LoadIndirect(AddressingMode::Direct),
         Opcode::OutLo,
+        Opcode::Load(Source::Const(ByteInWord::Lo, 0x22)),
+        Opcode::Store(Source::Ram(AddressingMode::Direct, 0x1E)),
+        Opcode::Load(Source::Const(ByteInWord::Lo, 0)),
+        Opcode::Load(Source::Ram(AddressingMode::Indirect, 0x1E)),
+        Opcode::OutLo,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
         Opcode::Nop,
         Opcode::Nop,
         Opcode::Nop,

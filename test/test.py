@@ -318,3 +318,25 @@ async def test_project(dut):
   assert dut.trap.value == 0
 
   await ClockCycles(dut.clk, 10)
+
+  # Indirect Addressing Mode
+
+  for step in range(0, 5):
+    dut.uio_in.value = 0x10
+    await ClockCycles(dut.clk, 10)
+    dut.uio_in.value = 0x00
+    await ClockCycles(dut.clk, 10)
+
+    while dut.busy != 0:
+      await ClockCycles(dut.clk, 10)
+
+    assert dut.halt.value == 0
+    assert dut.trap.value == 0
+
+  await ClockCycles(dut.clk, 10)
+
+  assert dut.uo_out.value == 30
+  assert dut.halt.value == 0
+  assert dut.trap.value == 0
+
+  await ClockCycles(dut.clk, 10)
