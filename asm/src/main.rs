@@ -11,6 +11,8 @@ enum Opcode {
     Return,
     BranchIndirect,
     CallIndirect,
+    CallWord(u16),
+    LoadImmediateWord(u16),
     Not,
     SetDataPointer,
     LoadIndirect,// TODO: (AddressingMode),
@@ -44,6 +46,8 @@ impl Opcode {
             Opcode::SetDataPointer => Encoded::U8(0x0A),
             Opcode::BranchIndirect => Encoded::U8(0x0C),
             Opcode::CallIndirect => Encoded::U8(0x0D),
+            Opcode::CallWord(w) => Encoded::U8U16(0x0E, *w),
+            Opcode::LoadImmediateWord(w) => Encoded::U8U16(0x0F, *w),
             //Opcode::LoadIndirect(m) => Encoded::U8(0x44 | m.encode()),
             Opcode::LoadIndirect => Encoded::U8(0x44),
             Opcode::Load(s) => s.encode(0x80),
@@ -205,6 +209,7 @@ impl Condition {
 enum Encoded {
     U16(u16),
     U8(u8),
+    U8U16(u8, u16),
 }
 
 fn main() {
@@ -390,6 +395,11 @@ fn main() {
         Opcode::Nop,
         Opcode::Nop,
         Opcode::Nop,
+        Opcode::LoadImmediateWord(0xABCD),
+        Opcode::OutHi,
+        Opcode::OutLo,
+        Opcode::CallWord(0x0098),
+        Opcode::OutLo,
     ];
 
     let target = 0x50;
@@ -637,6 +647,12 @@ fn main() {
                 match e {
                     Encoded::U8(b) => bytes.push(b),
                     Encoded::U16(w) => {
+                        let bs = w.to_le_bytes();
+                        bytes.push(bs[1]);
+                        bytes.push(bs[0]);
+                    }
+                    Encoded::U8U16(b, w) => {
+                        bytes.push(b);
                         let bs = w.to_le_bytes();
                         bytes.push(bs[1]);
                         bytes.push(bs[0]);

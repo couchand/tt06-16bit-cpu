@@ -35,6 +35,8 @@ module decoder (
     output wire        inst_out_lo,
     output wire        inst_out_hi,
     output wire        inst_set_dp,
+    output wire        inst_call_word,
+    output wire        inst_load_word,
     output wire        source_imm,
     output wire        source_ram,
     output wire        source_indirect,
@@ -59,6 +61,8 @@ module decoder (
   assign inst_out_lo = en & ((inst >> 8) == 16'h0008);
   assign inst_out_hi = en & ((inst >> 8) == 16'h0009);
   assign inst_set_dp = en & ((inst >> 8) == 16'h000A);
+  assign inst_call_word = en & ((inst >> 8) == 16'h000E);
+  assign inst_load_word = en & ((inst >> 8) == 16'h000F);
   wire inst_load_indirect = en & ((inst >> 8) == 16'h0044);
 
   assign bytes = zero_arg ? 1 : 2;
