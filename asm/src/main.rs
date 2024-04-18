@@ -19,6 +19,7 @@ enum Opcode {
     And(Source),
     Or(Source),
     Xor(Source),
+    Shift(Direction, ShiftSource),
     Branch(Target),
     Call(Target),
     If(Condition),
@@ -48,6 +49,7 @@ impl Opcode {
             Opcode::And(s) => s.encode(0xA0),
             Opcode::Or(s) => s.encode(0xA8),
             Opcode::Xor(s) => s.encode(0xB0),
+            Opcode::Shift(d, s) => s.encode(0xB8, *d),
             Opcode::Branch(t) => t.encode(0xC0),
             Opcode::Call(t) => t.encode(0xD0),
             Opcode::If(c) => c.encode(0xF0),
@@ -73,6 +75,45 @@ impl Source {
                 let mode = u16::from(m.encode()) << 8;
                 let addr = u16::from(*a);
                 opcode | relative | mode | addr
+            }
+        };
+        Encoded::U16(res)
+    }
+}
+
+#[derive(Clone, Copy)]
+enum Direction {
+    Left,
+    Right,
+}
+
+impl Direction {
+    fn encode(&self) -> u16 {
+        match self {
+            Direction::Left => 0,
+            Direction::Right => 1,
+        }
+    }
+}
+
+enum ShiftSource {
+    Const(u8),
+    Data,
+    Ram(RelativeTo, AddressingMode, u8),
+}
+
+impl ShiftSource {
+    fn encode(&self, op: u8, d: Direction) -> Encoded {
+        let mut res = u16::from(op) << 8;
+        res |= match self {
+            ShiftSource::Const(c) => (d.encode() << 8) | u16::from(*c),
+            ShiftSource::Data => 0x0200 | d.encode(),
+            ShiftSource::Ram(r, m, a) => {
+                let opcode = 0x0400;
+                let relative = u16::from(r.encode()) << 8;
+                let mode = u16::from(m.encode()) << 8;
+                let addr = 0xFFFE & u16::from(*a);
+                opcode | relative | mode | addr | d.encode()
             }
         };
         Encoded::U16(res)
@@ -305,6 +346,34 @@ fn main() {
         Opcode::Load(Source::Const(ByteInWord::Lo, 0xA5)),
         Opcode::OutLo,
         Opcode::Nop,
+        Opcode::Load(Source::Const(ByteInWord::Lo, 2)),
+        Opcode::Store(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, 0x1E)),
+        Opcode::Load(Source::Const(ByteInWord::Lo, 1)),
+        Opcode::OutLo,
+        Opcode::Shift(Direction::Left, ShiftSource::Const(1)),
+        Opcode::OutLo,
+        Opcode::Shift(Direction::Left, ShiftSource::Const(1)),
+        Opcode::OutLo,
+        Opcode::Shift(Direction::Left, ShiftSource::Const(1)),
+        Opcode::OutLo,
+        Opcode::Shift(Direction::Left, ShiftSource::Const(1)),
+        Opcode::OutLo,
+        Opcode::Shift(Direction::Left, ShiftSource::Const(1)),
+        Opcode::OutLo,
+        Opcode::Shift(Direction::Left, ShiftSource::Const(1)),
+        Opcode::OutLo,
+        Opcode::Shift(Direction::Left, ShiftSource::Const(1)),
+        Opcode::OutLo,
+        Opcode::Shift(Direction::Right, ShiftSource::Ram(RelativeTo::DataPointer, AddressingMode::Direct, 0x1E)),
+        Opcode::OutLo,
+        Opcode::Shift(Direction::Right, ShiftSource::Ram(RelativeTo::DataPointer, AddressingMode::Direct, 0x1E)),
+        Opcode::OutLo,
+        Opcode::Shift(Direction::Right, ShiftSource::Ram(RelativeTo::DataPointer, AddressingMode::Direct, 0x1E)),
+        Opcode::OutLo,
+        Opcode::Shift(Direction::Right, ShiftSource::Const(1)),
+        Opcode::OutLo,
+        Opcode::Shift(Direction::Right, ShiftSource::Const(1)),
+        Opcode::OutLo,
         Opcode::Nop,
         Opcode::Nop,
         Opcode::Nop,

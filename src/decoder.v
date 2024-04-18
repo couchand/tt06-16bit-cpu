@@ -22,6 +22,8 @@ module decoder (
     output wire        inst_and,
     output wire        inst_or,
     output wire        inst_xor,
+    output wire        inst_shl,
+    output wire        inst_shr,
     output wire        inst_not,
     output wire        inst_branch,
     output wire        inst_call,
@@ -72,6 +74,14 @@ module decoder (
   assign inst_or   = en & ((inst & 16'hF800) == 16'hA800);
   assign inst_xor  = en & ((inst & 16'hF800) == 16'hB000);
 
+  wire inst_sh   = en & ((inst & 16'hF800) == 16'hB800);
+  assign inst_shl = ~inst_sh ? 0
+    : source_ram ? ((inst & 16'h0001) == 16'h0000)
+    : ((inst & 16'h0100) == 16'h0000);
+  assign inst_shr = ~inst_sh ? 0
+    : source_ram ? ((inst & 16'h0001) == 16'h0001)
+    : ((inst & 16'h0100) == 16'h0100);
+
   assign inst_branch = en & ((inst & 16'hF800) == 16'hC000);
   assign inst_call = en & ((inst & 16'hF800) == 16'hD000);
   assign inst_if = en & ((inst & 16'hF800) == 16'hF000);
@@ -94,10 +104,13 @@ module decoder (
   assign rhs = !en ? 0
     : (inst_branch | inst_call) ? {{5{inst[10]}}, inst[10:0]}
     : inst_load_indirect ? accum
+    : (((inst & 16'h0600) == 16'h0000) & inst_sh) ? {8'h00, inst[7:0]}
+    : (((inst & 16'h0600) == 16'h0200) & inst_sh) ? {8'h00, data}
     : (inst & 16'h0700) == 16'h0000 ? {8'h00, inst[7:0]}
     : (inst & 16'h0700) == 16'h0100 ? {inst[7:0], 8'h00}
     : (inst & 16'h0700) == 16'h0200 ? {8'h00, data}
     : (inst & 16'h0700) == 16'h0300 ? {data, 8'h00}
+    : (((inst & 16'h0400) == 16'h0400) & inst_sh) ? {8'h00, inst[7:1], 1'b0}
     : (inst & 16'h0400) == 16'h0400 ? {8'h00, inst[7:0]}
     : 0;
 

@@ -543,6 +543,218 @@ async def test_ops(dut):
 
   await ClockCycles(dut.clk, 10)
 
+  # Shift
+
+  for step in range(0, 4):
+    dut.uio_in.value = 0x10
+    await ClockCycles(dut.clk, 10)
+    dut.uio_in.value = 0x00
+    await ClockCycles(dut.clk, 10)
+
+    while dut.busy.value != 0:
+      await ClockCycles(dut.clk, 10)
+
+    assert dut.halt.value == 0
+    assert dut.trap.value == 0
+
+  await ClockCycles(dut.clk, 10)
+
+  assert dut.uo_out.value == 0x01
+  assert dut.halt.value == 0
+  assert dut.trap.value == 0
+
+  await ClockCycles(dut.clk, 10)
+
+  for step in range(0, 2):
+    assert dut.trap.value == 0
+    dut.uio_in.value = 0x10
+    await ClockCycles(dut.clk, 10)
+    dut.uio_in.value = 0x00
+    await ClockCycles(dut.clk, 10)
+
+    while dut.busy.value != 0:
+      await ClockCycles(dut.clk, 10)
+
+  assert dut.uo_out.value == 0x02
+  assert dut.halt.value == 0
+  assert dut.trap.value == 0
+
+  await ClockCycles(dut.clk, 10)
+
+  for step in range(0, 2):
+    assert dut.trap.value == 0
+    dut.uio_in.value = 0x10
+    await ClockCycles(dut.clk, 10)
+    dut.uio_in.value = 0x00
+    await ClockCycles(dut.clk, 10)
+
+    while dut.busy.value != 0:
+      await ClockCycles(dut.clk, 10)
+
+  assert dut.uo_out.value == 0x04
+  assert dut.halt.value == 0
+  assert dut.trap.value == 0
+
+  await ClockCycles(dut.clk, 10)
+
+  for step in range(0, 2):
+    assert dut.trap.value == 0
+    dut.uio_in.value = 0x10
+    await ClockCycles(dut.clk, 10)
+    dut.uio_in.value = 0x00
+    await ClockCycles(dut.clk, 10)
+
+    while dut.busy.value != 0:
+      await ClockCycles(dut.clk, 10)
+
+  assert dut.uo_out.value == 0x08
+  assert dut.halt.value == 0
+  assert dut.trap.value == 0
+
+  await ClockCycles(dut.clk, 10)
+
+  for step in range(0, 2):
+    assert dut.trap.value == 0
+    dut.uio_in.value = 0x10
+    await ClockCycles(dut.clk, 10)
+    dut.uio_in.value = 0x00
+    await ClockCycles(dut.clk, 10)
+
+    while dut.busy.value != 0:
+      await ClockCycles(dut.clk, 10)
+
+  assert dut.uo_out.value == 0x10
+  assert dut.halt.value == 0
+  assert dut.trap.value == 0
+
+  await ClockCycles(dut.clk, 10)
+
+  for step in range(0, 2):
+    assert dut.trap.value == 0
+    dut.uio_in.value = 0x10
+    await ClockCycles(dut.clk, 10)
+    dut.uio_in.value = 0x00
+    await ClockCycles(dut.clk, 10)
+
+    while dut.busy.value != 0:
+      await ClockCycles(dut.clk, 10)
+
+  assert dut.uo_out.value == 0x20
+  assert dut.halt.value == 0
+  assert dut.trap.value == 0
+
+  await ClockCycles(dut.clk, 10)
+
+  for step in range(0, 2):
+    assert dut.trap.value == 0
+    dut.uio_in.value = 0x10
+    await ClockCycles(dut.clk, 10)
+    dut.uio_in.value = 0x00
+    await ClockCycles(dut.clk, 10)
+
+    while dut.busy.value != 0:
+      await ClockCycles(dut.clk, 10)
+
+  assert dut.uo_out.value == 0x40
+  assert dut.halt.value == 0
+  assert dut.trap.value == 0
+
+  await ClockCycles(dut.clk, 10)
+
+  for step in range(0, 2):
+    assert dut.trap.value == 0
+    dut.uio_in.value = 0x10
+    await ClockCycles(dut.clk, 10)
+    dut.uio_in.value = 0x00
+    await ClockCycles(dut.clk, 10)
+
+    while dut.busy.value != 0:
+      await ClockCycles(dut.clk, 10)
+
+  assert dut.uo_out.value == 0x80
+  assert dut.halt.value == 0
+  assert dut.trap.value == 0
+
+  await ClockCycles(dut.clk, 10)
+
+  for step in range(0, 2):
+    assert dut.trap.value == 0
+    dut.uio_in.value = 0x10
+    await ClockCycles(dut.clk, 10)
+    dut.uio_in.value = 0x00
+    await ClockCycles(dut.clk, 10)
+
+    while dut.busy.value != 0:
+      await ClockCycles(dut.clk, 10)
+
+  assert dut.uo_out.value == 0x20
+  assert dut.halt.value == 0
+  assert dut.trap.value == 0
+
+  await ClockCycles(dut.clk, 10)
+
+  for step in range(0, 2):
+    assert dut.trap.value == 0
+    dut.uio_in.value = 0x10
+    await ClockCycles(dut.clk, 10)
+    dut.uio_in.value = 0x00
+    await ClockCycles(dut.clk, 10)
+
+    while dut.busy.value != 0:
+      await ClockCycles(dut.clk, 10)
+
+  assert dut.uo_out.value == 0x08
+  assert dut.halt.value == 0
+  assert dut.trap.value == 0
+
+  await ClockCycles(dut.clk, 10)
+
+  for step in range(0, 2):
+    assert dut.trap.value == 0
+    dut.uio_in.value = 0x10
+    await ClockCycles(dut.clk, 10)
+    dut.uio_in.value = 0x00
+    await ClockCycles(dut.clk, 10)
+
+    while dut.busy.value != 0:
+      await ClockCycles(dut.clk, 10)
+
+  assert dut.uo_out.value == 0x02
+  assert dut.halt.value == 0
+  assert dut.trap.value == 0
+
+  await ClockCycles(dut.clk, 10)
+
+  for step in range(0, 2):
+    assert dut.trap.value == 0
+    dut.uio_in.value = 0x10
+    await ClockCycles(dut.clk, 10)
+    dut.uio_in.value = 0x00
+    await ClockCycles(dut.clk, 10)
+
+    while dut.busy.value != 0:
+      await ClockCycles(dut.clk, 10)
+
+  assert dut.uo_out.value == 0x01
+  assert dut.halt.value == 0
+  assert dut.trap.value == 0
+
+  await ClockCycles(dut.clk, 10)
+
+  for step in range(0, 2):
+    assert dut.trap.value == 0
+    dut.uio_in.value = 0x10
+    await ClockCycles(dut.clk, 10)
+    dut.uio_in.value = 0x00
+    await ClockCycles(dut.clk, 10)
+
+    while dut.busy.value != 0:
+      await ClockCycles(dut.clk, 10)
+
+  assert dut.uo_out.value == 0x00
+  assert dut.halt.value == 0
+  assert dut.trap.value == 0
+
 @cocotb.test()
 async def test_fib_memo(dut):
   dut.enable_ops.value = 0

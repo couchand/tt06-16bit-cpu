@@ -35,9 +35,10 @@ module cpu (
   wire [15:0] rhs;
   wire [1:0] inst_bytes_raw;
   wire [15:0] inst_bytes = {14'b0, inst_bytes_raw};
-  wire inst_nop, inst_load, inst_store, inst_add, inst_sub, inst_and, inst_or, inst_xor;
-  wire inst_branch, inst_call, inst_if, inst_push, inst_pop, inst_drop, inst_return, inst_not;
-  wire inst_out_lo, inst_out_hi, inst_halt, inst_trap, inst_set_dp;
+  wire inst_load, inst_store, inst_add, inst_sub;
+  wire inst_and, inst_or, inst_xor, inst_not, inst_shl, inst_shr;
+  wire inst_branch, inst_call, inst_if, inst_push, inst_pop, inst_drop, inst_return;
+  wire inst_nop, inst_out_lo, inst_out_hi, inst_halt, inst_trap, inst_set_dp;
   wire source_imm, source_ram, source_indirect;
   wire relative_stack, relative_data;
   wire if_zero, if_not_zero, if_else, if_not_else;
@@ -60,6 +61,8 @@ module cpu (
     .inst_and(inst_and),
     .inst_or(inst_or),
     .inst_xor(inst_xor),
+    .inst_shl(inst_shl),
+    .inst_shr(inst_shr),
     .inst_not(inst_not),
     .inst_branch(inst_branch),
     .inst_call(inst_call),
@@ -296,6 +299,30 @@ module cpu (
           end else if (source_ram | source_indirect) begin
             state <= ST_INST_EXEC1;
           end
+        end else if (inst_shl) begin
+          if (skip) begin
+            pc <= pc + inst_bytes;
+            state <= ST_INIT;
+          end else if (source_imm) begin
+            accum <= accum << rhs;
+            zero <= (accum << rhs) == 0;
+            pc <= pc + inst_bytes;
+            state <= ST_INIT;
+          end else if (source_ram | source_indirect) begin
+            state <= ST_INST_EXEC1;
+          end
+        end else if (inst_shr) begin
+          if (skip) begin
+            pc <= pc + inst_bytes;
+            state <= ST_INIT;
+          end else if (source_imm) begin
+            accum <= accum >> rhs;
+            zero <= (accum >> rhs) == 0;
+            pc <= pc + inst_bytes;
+            state <= ST_INIT;
+          end else if (source_ram | source_indirect) begin
+            state <= ST_INST_EXEC1;
+          end
         end else if (inst_branch) begin
           state <= ST_INIT;
           if (skip) begin
@@ -401,6 +428,16 @@ module cpu (
             end else if (inst_xor) begin
               accum <= accum ^ ram_data_out;
               zero <= (accum ^ ram_data_out) == 0;
+              pc <= pc + inst_bytes;
+              state <= ST_INIT;
+            end else if (inst_shl) begin
+              accum <= accum << ram_data_out;
+              zero <= (accum << ram_data_out) == 0;
+              pc <= pc + inst_bytes;
+              state <= ST_INIT;
+            end else if (inst_shr) begin
+              accum <= accum >> ram_data_out;
+              zero <= (accum >> ram_data_out) == 0;
               pc <= pc + inst_bytes;
               state <= ST_INIT;
             end else if (inst_store) begin
