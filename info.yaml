@@ -2,7 +2,7 @@
 project:
   title:        "16-bit CPU"      # Project title
   author:       "Andrew Dona-Couch"      # Your name
-  discord:      ""      # Your discord username, for communication and automatically assigning you a Tapeout role (optional)
+  discord:      "couchand_75981"      # Your discord username, for communication and automatically assigning you a Tapeout role (optional)
   description:  "Simple 16-bit CPU"      # One line description of what your project does
   language:     "Verilog" # other examples include SystemVerilog, Amaranth, VHDL, etc
   clock_hz:     0       # Clock frequency in Hz (or 0 if not applicable)
