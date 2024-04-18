@@ -1,6 +1,7 @@
 enum Opcode {
     Text(u8),
     Nop,
+    Halt,
     OutLo,
     Not,
     LoadIndirect(AddressingMode),
@@ -20,6 +21,7 @@ impl Opcode {
         match self {
             Opcode::Text(v) => Encoded::U8(*v),
             Opcode::Nop => Encoded::U8(0),
+            Opcode::Halt => Encoded::U8(1),
             Opcode::OutLo => Encoded::U8(8),
             Opcode::Not => Encoded::U8(7),
             Opcode::LoadIndirect(m) => Encoded::U8(0x44 | m.encode()),

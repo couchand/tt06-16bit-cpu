@@ -34,7 +34,7 @@ module cpu (
   wire [1:0] inst_bytes_raw;
   wire [15:0] inst_bytes = {14'b0, inst_bytes_raw};
   wire inst_nop, inst_load, inst_store, inst_add, inst_sub, inst_and, inst_or, inst_xor;
-  wire inst_branch, inst_if, inst_out_lo, inst_not;
+  wire inst_branch, inst_if, inst_out_lo, inst_not, inst_halt;
   wire source_imm, source_ram, source_indirect;
   wire if_zero, if_not_zero, if_else, if_not_else;
   wire decoding = (state == ST_INST_EXEC0) | (state == ST_INST_EXEC1)
@@ -47,6 +47,7 @@ module cpu (
     .rhs(rhs),
     .bytes(inst_bytes),
     .inst_nop(inst_nop),
+    .inst_halt(inst_halt),
     .inst_load(inst_load),
     .inst_store(inst_store),
     .inst_add(inst_add),
@@ -144,6 +145,13 @@ module cpu (
         if (inst_nop) begin
           pc <= pc + inst_bytes;
           state <= ST_INIT;
+        end else if (inst_halt) begin
+          pc <= pc + inst_bytes;
+          if (skip) begin
+            state <= ST_INIT;
+          end else begin
+            state <= ST_HALT;
+          end
         end else if (inst_not) begin
           pc <= pc + inst_bytes;
           state <= ST_INIT;

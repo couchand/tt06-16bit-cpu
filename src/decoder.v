@@ -13,6 +13,7 @@ module decoder (
     output wire [15:0] rhs,
     output wire [1:0]  bytes,
     output wire        inst_nop,
+    output wire        inst_halt,
     output wire        inst_load,
     output wire        inst_store,
     output wire        inst_add,
@@ -36,6 +37,7 @@ module decoder (
   wire zero_arg = en & ((inst & 16'h8000) == 16'h0000);
 
   assign inst_nop = en & ((inst >> 8) == 0);
+  assign inst_halt = en & ((inst >> 8) == 1);
   assign inst_not = en & ((inst >> 8) == 7);
   assign inst_out_lo = en & ((inst >> 8) == 8);
   wire inst_load_indirect = en & ((inst >> 8) == 16'h0044);
