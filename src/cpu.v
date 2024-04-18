@@ -31,7 +31,8 @@ module cpu (
   reg skipped;
 
   wire [15:0] rhs;
-  wire [1:0] inst_bytes;
+  wire [1:0] inst_bytes_raw;
+  wire [15:0] inst_bytes = {14'b0, inst_bytes_raw};
   wire inst_nop, inst_load, inst_store, inst_add, inst_sub, inst_and, inst_or, inst_xor;
   wire inst_branch, inst_if, inst_out_lo, inst_not;
   wire source_imm, source_ram, source_indirect;
