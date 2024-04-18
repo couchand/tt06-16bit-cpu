@@ -14,6 +14,7 @@ module decoder (
     output wire [1:0]  bytes,
     output wire        inst_nop,
     output wire        inst_halt,
+    output wire        inst_trap,
     output wire        inst_load,
     output wire        inst_store,
     output wire        inst_add,
@@ -47,6 +48,7 @@ module decoder (
 
   assign inst_nop = en & ((inst >> 8) == 16'h0000);
   assign inst_halt = en & ((inst >> 8) == 16'h0001);
+  assign inst_trap = en & ((inst >> 8) == 16'h0002);
   assign inst_drop = en & ((inst >> 8) == 16'h0003);
   assign inst_push = en & ((inst >> 8) == 16'h0004);
   assign inst_pop = en & ((inst >> 8) == 16'h0005);
