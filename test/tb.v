@@ -51,15 +51,17 @@ module tb ();
       .rst_n  (rst_n)     // not reset
   );
 
-  reg enable_ops, enable_fib_memo, enable_fib_framed;
+  reg enable_ops, enable_fib_memo, enable_fib_framed, enable_fib_recursive;
 
   wire spi_select_ops = spi_select & enable_ops;
   wire spi_select_fib_memo = spi_select & enable_fib_memo;
   wire spi_select_fib_framed = spi_select & enable_fib_framed;
+  wire spi_select_fib_recursive = spi_select & enable_fib_recursive;
 
   assign spi_miso = enable_ops ? spi_miso_ops
     : enable_fib_memo ? spi_miso_fib_memo
     : enable_fib_framed ? spi_miso_fib_framed
+    : enable_fib_recursive ? spi_miso_fib_recursive
     : 0;
 
   reg debug_clk;
@@ -105,6 +107,20 @@ module tb ();
     .debug_clk(debug_clk),
     .debug_addr(debug_addr),
     .debug_data(debug_data_fib_framed)
+  );
+
+  wire [31:0] debug_data_fib_recursive;
+  wire spi_miso_fib_recursive;
+  sim_spi_ram #(
+    .INIT_FILE("fib_recursive.mem")
+  ) spi_ram_fib_recursive (
+    .spi_clk(spi_clk),
+    .spi_mosi(spi_mosi),
+    .spi_select(spi_select_fib_recursive),
+    .spi_miso(spi_miso_fib_recursive),
+    .debug_clk(debug_clk),
+    .debug_addr(debug_addr),
+    .debug_data(debug_data_fib_recursive)
   );
 
 endmodule

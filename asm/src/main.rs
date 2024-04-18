@@ -5,6 +5,7 @@ enum Opcode {
     OutLo,
     Push,
     Pop,
+    Drop,
     Return,
     Not,
     SetDataPointer,
@@ -27,6 +28,7 @@ impl Opcode {
             Opcode::Text(v) => Encoded::U8(*v),
             Opcode::Nop => Encoded::U8(0x00),
             Opcode::Halt => Encoded::U8(0x01),
+            Opcode::Drop => Encoded::U8(0x03),
             Opcode::Push => Encoded::U8(0x04),
             Opcode::Pop => Encoded::U8(0x05),
             Opcode::Return => Encoded::U8(0x06),
@@ -483,9 +485,47 @@ fn main() {
         Opcode::Nop,
     ];
 
+    let fib_fn = 8;
+    let br1 = 14;
+    let br2 = 20;
+    let just_one = 37;
+
+    let fib_recursive_insts = [
+        Opcode::Load(Source::Data(ByteInWord::Lo)),
+        Opcode::Push,
+        Opcode::Nop,
+        Opcode::Call(Target::U11(fib_fn)),
+        Opcode::OutLo,
+        Opcode::Halt,
+        // fib_fn
+        Opcode::Load(Source::Ram(RelativeTo::StackPointer, AddressingMode::Direct, 2)),
+        Opcode::If(Condition::Zero),
+        Opcode::Branch(Target::U11(just_one - br1)),
+        Opcode::Sub(Source::Const(ByteInWord::Lo, 1)),
+        Opcode::If(Condition::Zero),
+        Opcode::Branch(Target::U11(just_one - br2)),
+        Opcode::Push,
+        Opcode::Call(Target::U11(fib_fn)),
+        Opcode::Drop,
+        Opcode::Push,
+        Opcode::Load(Source::Ram(RelativeTo::StackPointer, AddressingMode::Direct, 4)),
+        Opcode::Sub(Source::Const(ByteInWord::Lo, 2)),
+        Opcode::Push,
+        Opcode::Call(Target::U11(fib_fn)),
+        Opcode::Drop,
+        Opcode::Add(Source::Ram(RelativeTo::StackPointer, AddressingMode::Direct, 0)),
+        Opcode::Drop,
+        Opcode::Return,
+        // just_one
+        Opcode::Load(Source::Const(ByteInWord::Lo, 1)),
+        Opcode::Return,
+        Opcode::Nop,
+    ];
+
     run("../test/ops.mem", &ops_insts).unwrap();
     run("../test/fib_memo.mem", &fib_memo_insts).unwrap();
     run("../test/fib_framed.mem", &fib_framed_insts).unwrap();
+    run("../test/fib_recursive.mem", &fib_recursive_insts).unwrap();
 
     fn run(filename: &str, insts: &[Opcode]) -> std::io::Result<()> {
         let encoded = insts.iter().map(|i| i.encode()).collect::<Vec<_>>();
