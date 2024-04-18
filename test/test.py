@@ -35,7 +35,7 @@ async def test_project(dut):
     dut.uio_in.value = 0x00
     await ClockCycles(dut.clk, 10)
 
-    while dut.busy != 0:
+    while dut.busy.value != 0:
       await ClockCycles(dut.clk, 10)
 
   await ClockCycles(dut.clk, 10)
@@ -56,7 +56,7 @@ async def test_project(dut):
     dut.uio_in.value = 0x00
     await ClockCycles(dut.clk, 10)
 
-    while dut.busy != 0:
+    while dut.busy.value != 0:
       await ClockCycles(dut.clk, 10)
 
   await ClockCycles(dut.clk, 10)
@@ -75,7 +75,7 @@ async def test_project(dut):
     dut.uio_in.value = 0x00
     await ClockCycles(dut.clk, 10)
 
-    while dut.busy != 0:
+    while dut.busy.value != 0:
       await ClockCycles(dut.clk, 10)
 
   await ClockCycles(dut.clk, 10)
@@ -94,7 +94,7 @@ async def test_project(dut):
     dut.uio_in.value = 0x00
     await ClockCycles(dut.clk, 10)
 
-    while dut.busy != 0:
+    while dut.busy.value != 0:
       await ClockCycles(dut.clk, 10)
 
   await ClockCycles(dut.clk, 10)
@@ -113,7 +113,7 @@ async def test_project(dut):
     dut.uio_in.value = 0x00
     await ClockCycles(dut.clk, 10)
 
-    while dut.busy != 0:
+    while dut.busy.value != 0:
       await ClockCycles(dut.clk, 10)
 
   await ClockCycles(dut.clk, 10)
@@ -135,7 +135,7 @@ async def test_project(dut):
       dut.uio_in.value = 0x00
       await ClockCycles(dut.clk, 10)
 
-      while dut.busy != 0:
+      while dut.busy.value != 0:
         await ClockCycles(dut.clk, 10)
 
     await ClockCycles(dut.clk, 10)
@@ -154,7 +154,7 @@ async def test_project(dut):
     dut.uio_in.value = 0x00
     await ClockCycles(dut.clk, 10)
 
-    while dut.busy != 0:
+    while dut.busy.value != 0:
       await ClockCycles(dut.clk, 10)
 
     assert dut.halt.value == 0
@@ -176,7 +176,7 @@ async def test_project(dut):
     dut.uio_in.value = 0x00
     await ClockCycles(dut.clk, 10)
 
-    while dut.busy != 0:
+    while dut.busy.value != 0:
       await ClockCycles(dut.clk, 10)
 
   await ClockCycles(dut.clk, 10)
@@ -195,7 +195,7 @@ async def test_project(dut):
     dut.uio_in.value = 0x00
     await ClockCycles(dut.clk, 10)
 
-    while dut.busy != 0:
+    while dut.busy.value != 0:
       await ClockCycles(dut.clk, 10)
 
     assert dut.halt.value == 0
@@ -217,7 +217,7 @@ async def test_project(dut):
     dut.uio_in.value = 0x00
     await ClockCycles(dut.clk, 10)
 
-    while dut.busy != 0:
+    while dut.busy.value != 0:
       await ClockCycles(dut.clk, 10)
 
     assert dut.halt.value == 0
@@ -239,7 +239,7 @@ async def test_project(dut):
     dut.uio_in.value = 0x00
     await ClockCycles(dut.clk, 10)
 
-    while dut.busy != 0:
+    while dut.busy.value != 0:
       await ClockCycles(dut.clk, 10)
 
     assert dut.halt.value == 0
@@ -261,7 +261,7 @@ async def test_project(dut):
     dut.uio_in.value = 0x00
     await ClockCycles(dut.clk, 10)
 
-    while dut.busy != 0:
+    while dut.busy.value != 0:
       await ClockCycles(dut.clk, 10)
 
     assert dut.halt.value == 0
@@ -283,7 +283,7 @@ async def test_project(dut):
     dut.uio_in.value = 0x00
     await ClockCycles(dut.clk, 10)
 
-    while dut.busy != 0:
+    while dut.busy.value != 0:
       await ClockCycles(dut.clk, 10)
 
     assert dut.halt.value == 0
@@ -305,7 +305,7 @@ async def test_project(dut):
     dut.uio_in.value = 0x00
     await ClockCycles(dut.clk, 10)
 
-    while dut.busy != 0:
+    while dut.busy.value != 0:
       await ClockCycles(dut.clk, 10)
 
     assert dut.halt.value == 0
@@ -327,7 +327,7 @@ async def test_project(dut):
     dut.uio_in.value = 0x00
     await ClockCycles(dut.clk, 10)
 
-    while dut.busy != 0:
+    while dut.busy.value != 0:
       await ClockCycles(dut.clk, 10)
 
     assert dut.halt.value == 0
