@@ -92,7 +92,7 @@ impl Target {
     fn encode(&self, op: u8) -> Encoded {
         let mut res = u16::from(op) << 8;
         res |= match self {
-            Target::I11(v) => *v as u16,
+            Target::I11(v) => (*v as u16) & 0x07FF,
         };
         Encoded::U16(res)
     }
