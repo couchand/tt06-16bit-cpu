@@ -65,8 +65,8 @@ module decoder (
 
   wire one_arg = en & ((inst & 16'hC000) == 16'h8000);
 
-  wire inst_load_main = en & ((inst & 16'hF800) == 16'h8000);
-  assign inst_load = inst_load_main | inst_load_indirect;
+  wire inst_load_direct = en & ((inst & 16'hF800) == 16'h8000);
+  assign inst_load = inst_load_direct | inst_load_indirect;
   assign inst_store = en & ((inst & 16'hF800) == 16'h9000);
   assign inst_add  = en & ((inst & 16'hF800) == 16'h8800);
   assign inst_sub  = en & ((inst & 16'hF800) == 16'h9800);
@@ -82,8 +82,14 @@ module decoder (
     : source_ram ? ((inst & 16'h0001) == 16'h0001)
     : ((inst & 16'h0100) == 16'h0100);
 
-  assign inst_branch = en & ((inst & 16'hF800) == 16'hC000);
-  assign inst_call = en & ((inst & 16'hF800) == 16'hD000);
+  wire inst_branch_direct = en & ((inst & 16'hF800) == 16'hC000);
+  wire inst_branch_indirect = en & ((inst >> 8) == 16'h000C);
+  assign inst_branch = inst_branch_direct | inst_branch_indirect;
+
+  wire inst_call_direct = en & ((inst & 16'hF800) == 16'hD000);
+  wire inst_call_indirect = en & ((inst >> 8) == 16'h000D);
+  assign inst_call = inst_call_direct | inst_call_indirect;
+
   assign inst_if = en & ((inst & 16'hF800) == 16'hF000);
 
   wire source_const = !one_arg ? 0 : (inst & 16'h0600) == 16'h0000;
@@ -102,8 +108,8 @@ module decoder (
     : 0;
 
   assign rhs = !en ? 0
-    : (inst_branch | inst_call) ? {{5{inst[10]}}, inst[10:0]}
-    : inst_load_indirect ? accum
+    : (inst_branch_direct | inst_call_direct) ? {{5{inst[10]}}, inst[10:0]}
+    : (inst_load_indirect | inst_branch_indirect | inst_call_indirect) ? accum
     : (((inst & 16'h0600) == 16'h0000) & inst_sh) ? {8'h00, inst[7:0]}
     : (((inst & 16'h0600) == 16'h0200) & inst_sh) ? {8'h00, data}
     : (inst & 16'h0700) == 16'h0000 ? {8'h00, inst[7:0]}

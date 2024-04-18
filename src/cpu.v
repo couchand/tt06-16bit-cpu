@@ -118,7 +118,7 @@ module cpu (
     : 0;
   wire [15:0] ram_data_in = ((state == ST_INST_EXEC0) & source_ram & inst_store) ? accum
     : ((state == ST_INST_EXEC0) & inst_push) ? accum
-    : ((state == ST_INST_EXEC0) & inst_call) ? pc
+    : ((state == ST_INST_EXEC0) & inst_call) ? (pc + inst_bytes)
     : ((state == ST_INST_EXEC2) & source_indirect & inst_store) ? accum
     : 0;
   wire ram_start_write = ((state == ST_INST_EXEC0) & source_ram & inst_store) ? ~skip
@@ -398,7 +398,7 @@ module cpu (
           end else if (inst_return) begin
             sp <= sp + 2;
             state <= ST_INIT;
-            pc <= ram_data_out + 2;
+            pc <= ram_data_out;
           end else if (source_ram) begin
             if (inst_load) begin
               accum <= ram_data_out;
