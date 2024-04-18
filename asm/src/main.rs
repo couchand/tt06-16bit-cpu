@@ -125,7 +125,7 @@ enum Encoded {
 }
 
 fn main() {
-    let insts = [
+    let ops_insts = [
         Opcode::Nop,
         Opcode::Nop,
         Opcode::Nop,
@@ -242,7 +242,7 @@ fn main() {
     let br3 = 0x44;
     let done = 0x44;
 
-    let insts = [
+    let fib_memo_insts = [
         Opcode::Load(Source::Data(ByteInWord::Lo)),
         Opcode::Store(Source::Ram(AddressingMode::Direct, target)),
         Opcode::Load(Source::Const(ByteInWord::Lo, 1)),
@@ -324,24 +324,34 @@ fn main() {
         Opcode::Nop,
     ];
 
-    let encoded = insts.iter().map(|i| i.encode()).collect::<Vec<_>>();
+    run("../test/ops.mem", &ops_insts).unwrap();
+    run("../test/fib_memo.mem", &fib_memo_insts).unwrap();
 
-    let bytes = {
-        let mut bytes = vec![];
-        for e in encoded {
-            match e {
-                Encoded::U8(b) => bytes.push(b),
-                Encoded::U16(w) => {
-                    let bs = w.to_le_bytes();
-                    bytes.push(bs[1]);
-                    bytes.push(bs[0]);
+    fn run(filename: &str, insts: &[Opcode]) -> std::io::Result<()> {
+        let encoded = insts.iter().map(|i| i.encode()).collect::<Vec<_>>();
+
+        let bytes = {
+            let mut bytes = vec![];
+            for e in encoded {
+                match e {
+                    Encoded::U8(b) => bytes.push(b),
+                    Encoded::U16(w) => {
+                        let bs = w.to_le_bytes();
+                        bytes.push(bs[1]);
+                        bytes.push(bs[0]);
+                    }
                 }
             }
-        }
-        bytes
-    };
+            bytes
+        };
 
-    for g in bytes.chunks(4) {
-        println!("{:02X}{:02X}{:02X}{:02X}", g[3], g[2], g[1], g[0]);
+        use std::io::Write;
+        let mut f = std::fs::File::create(filename)?;
+
+        for g in bytes.chunks(4) {
+            writeln!(f, "{:02X}{:02X}{:02X}{:02X}", g[3], g[2], g[1], g[0])?;
+        }
+
+        Ok(())
     }
 }
