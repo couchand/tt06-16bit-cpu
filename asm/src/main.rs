@@ -484,6 +484,9 @@ fn main() {
                     }
                 }
             }
+            while bytes.len() < 65536 {
+                bytes.push(0);
+            }
             bytes
         };
 
