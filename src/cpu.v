@@ -29,6 +29,7 @@ module cpu (
   reg [15:0] dp;
   reg [15:0] sp;
   reg zero;
+  reg neg;
   reg skip;
   reg skipped;
 
@@ -42,7 +43,7 @@ module cpu (
   wire inst_call_word, inst_load_word;
   wire source_imm, source_ram, source_indirect;
   wire relative_stack, relative_data;
-  wire if_zero, if_not_zero, if_else, if_not_else;
+  wire if_zero, if_not_zero, if_else, if_not_else, if_neg, if_not_neg;
   wire decoding = (state == ST_INST_EXEC0) | (state == ST_INST_EXEC1)
     | (state == ST_INST_EXEC2) | (state == ST_INST_EXEC3);
   decoder inst_decoder(
@@ -85,7 +86,9 @@ module cpu (
     .if_zero(if_zero),
     .if_not_zero(if_not_zero),
     .if_else(if_else),
-    .if_not_else(if_not_else)
+    .if_not_else(if_not_else),
+    .if_neg(if_neg),
+    .if_not_neg(if_not_neg)
   );
 
   reg [8:0] state;
@@ -108,7 +111,7 @@ module cpu (
   wire [15:0] sp_minus_two = sp - 2;
 
   wire [15:0] ram_addr = (state == ST_LOAD_INST0) ? pc
-    : ((state == ST_INST_EXEC0) & (inst_push | inst_call)) ? sp_minus_two
+    : ((state == ST_INST_EXEC0) & (inst_push | inst_call | inst_call_word)) ? sp_minus_two
     : ((state == ST_INST_EXEC0) & (inst_pop | inst_return)) ? sp
     : ((state == ST_INST_EXEC0) & inst_load_word) ? (pc + inst_bytes)
     : ((state == ST_INST_EXEC0) & (source_ram | source_indirect))
@@ -163,6 +166,7 @@ module cpu (
       dp <= 0;
       sp <= 0;
       zero <= 0;
+      neg <= 0;
       skip <= 0;
       skipped <= 0;
       data_out <= 0;
@@ -225,6 +229,7 @@ module cpu (
           if (~skip) begin
             accum <= ~accum;
             zero <= (~accum) == 0;
+            neg <= (~accum) < 0;
           end
         end else if (inst_call_word | inst_load_word) begin
           if (skip) begin
@@ -240,6 +245,7 @@ module cpu (
           end else if (source_imm) begin
             accum <= rhs;
             zero <= rhs == 0;
+            neg <= rhs < 0;
             pc <= pc + inst_bytes;
             state <= ST_INIT;
           end else if (source_ram | source_indirect) begin
@@ -261,6 +267,7 @@ module cpu (
           end else if (source_imm) begin
             accum <= accum + rhs;
             zero <= (accum + rhs) == 0;
+            neg <= (accum + rhs) < 0;
             pc <= pc + inst_bytes;
             state <= ST_INIT;
           end else if (source_ram | source_indirect) begin
@@ -273,6 +280,7 @@ module cpu (
           end else if (source_imm) begin
             accum <= accum - rhs;
             zero <= (accum - rhs) == 0;
+            neg <= (accum - rhs) < 0;
             pc <= pc + inst_bytes;
             state <= ST_INIT;
           end else if (source_ram | source_indirect) begin
@@ -285,6 +293,7 @@ module cpu (
           end else if (source_imm) begin
             accum <= accum & rhs;
             zero <= (accum & rhs) == 0;
+            neg <= (accum & rhs) < 0;
             pc <= pc + inst_bytes;
             state <= ST_INIT;
           end else if (source_ram | source_indirect) begin
@@ -297,6 +306,7 @@ module cpu (
           end else if (source_imm) begin
             accum <= accum | rhs;
             zero <= (accum | rhs) == 0;
+            neg <= (accum | rhs) < 0;
             pc <= pc + inst_bytes;
             state <= ST_INIT;
           end else if (source_ram | source_indirect) begin
@@ -309,6 +319,7 @@ module cpu (
           end else if (source_imm) begin
             accum <= accum ^ rhs;
             zero <= (accum ^ rhs) == 0;
+            neg <= (accum ^ rhs) < 0;
             pc <= pc + inst_bytes;
             state <= ST_INIT;
           end else if (source_ram | source_indirect) begin
@@ -321,6 +332,7 @@ module cpu (
           end else if (source_imm) begin
             accum <= accum << rhs;
             zero <= (accum << rhs) == 0;
+            neg <= (accum << rhs) < 0;
             pc <= pc + inst_bytes;
             state <= ST_INIT;
           end else if (source_ram | source_indirect) begin
@@ -333,6 +345,7 @@ module cpu (
           end else if (source_imm) begin
             accum <= accum >> rhs;
             zero <= (accum >> rhs) == 0;
+            neg <= (accum >> rhs) < 0;
             pc <= pc + inst_bytes;
             state <= ST_INIT;
           end else if (source_ram | source_indirect) begin
@@ -387,6 +400,12 @@ module cpu (
             skip <= ~skipped;
           end else if (if_not_else) begin
             skip <= skipped;
+          end else if (if_neg) begin
+            skip <= neg;
+          end else if (if_not_neg) begin
+            skip <= ~neg;
+          end else begin
+            state <= ST_TRAP;
           end
         end else begin
           skip <= 0;
@@ -404,6 +423,7 @@ module cpu (
             sp <= sp + 2;
             accum <= ram_data_out;
             zero <= ram_data_out == 0;
+            neg <= ram_data_out < 0;
             state <= ST_INIT;
             pc <= pc + inst_bytes;
           end else if (inst_call) begin
@@ -420,47 +440,56 @@ module cpu (
           end else if (inst_load_word) begin
             accum <= ram_data_out;
             zero <= ram_data_out == 0;
+            neg <= ram_data_out < 0;
             pc <= pc + inst_bytes + 2;
             state <= ST_INIT;
           end else if (source_ram) begin
             if (inst_load) begin
               accum <= ram_data_out;
               zero <= ram_data_out == 0;
+              neg <= ram_data_out < 0;
               pc <= pc + inst_bytes;
               state <= ST_INIT;
             end else if (inst_add) begin
               accum <= accum + ram_data_out;
               zero <= (accum + ram_data_out) == 0;
+              neg <= (accum + ram_data_out) < 0;
               pc <= pc + inst_bytes;
               state <= ST_INIT;
             end else if (inst_sub) begin
               accum <= accum - ram_data_out;
               zero <= (accum - ram_data_out) == 0;
+              neg <= (accum - ram_data_out) < 0;
               pc <= pc + inst_bytes;
               state <= ST_INIT;
             end else if (inst_and) begin
               accum <= accum & ram_data_out;
               zero <= (accum & ram_data_out) == 0;
+              neg <= (accum & ram_data_out) < 0;
               pc <= pc + inst_bytes;
               state <= ST_INIT;
             end else if (inst_or) begin
               accum <= accum | ram_data_out;
               zero <= (accum | ram_data_out) == 0;
+              neg <= (accum | ram_data_out) < 0;
               pc <= pc + inst_bytes;
               state <= ST_INIT;
             end else if (inst_xor) begin
               accum <= accum ^ ram_data_out;
               zero <= (accum ^ ram_data_out) == 0;
+              neg <= (accum ^ ram_data_out) < 0;
               pc <= pc + inst_bytes;
               state <= ST_INIT;
             end else if (inst_shl) begin
               accum <= accum << ram_data_out;
               zero <= (accum << ram_data_out) == 0;
+              neg <= (accum << ram_data_out) < 0;
               pc <= pc + inst_bytes;
               state <= ST_INIT;
             end else if (inst_shr) begin
               accum <= accum >> ram_data_out;
               zero <= (accum >> ram_data_out) == 0;
+              neg <= (accum >> ram_data_out) < 0;
               pc <= pc + inst_bytes;
               state <= ST_INIT;
             end else if (inst_store) begin
@@ -484,31 +513,37 @@ module cpu (
           if (inst_load) begin
             accum <= ram_data_out;
             zero <= ram_data_out == 0;
+            neg <= ram_data_out < 0;
             pc <= pc + inst_bytes;
             state <= ST_INIT;
           end else if (inst_add) begin
             accum <= accum + ram_data_out;
             zero <= (accum + ram_data_out) == 0;
+            neg <= (accum + ram_data_out) < 0;
             pc <= pc + inst_bytes;
             state <= ST_INIT;
           end else if (inst_sub) begin
             accum <= accum - ram_data_out;
             zero <= (accum - ram_data_out) == 0;
+            neg <= (accum - ram_data_out) < 0;
             pc <= pc + inst_bytes;
             state <= ST_INIT;
           end else if (inst_and) begin
             accum <= accum & ram_data_out;
             zero <= (accum & ram_data_out) == 0;
+            neg <= (accum & ram_data_out) < 0;
             pc <= pc + inst_bytes;
             state <= ST_INIT;
           end else if (inst_or) begin
             accum <= accum | ram_data_out;
             zero <= (accum | ram_data_out) == 0;
+            neg <= (accum | ram_data_out) < 0;
             pc <= pc + inst_bytes;
             state <= ST_INIT;
           end else if (inst_xor) begin
             accum <= accum ^ ram_data_out;
             zero <= (accum ^ ram_data_out) == 0;
+            neg <= (accum ^ ram_data_out) < 0;
             pc <= pc + inst_bytes;
             state <= ST_INIT;
           end else if (inst_store) begin

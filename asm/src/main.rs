@@ -191,16 +191,20 @@ enum Condition {
     NotZero,
     Else,
     NotElse,
+    Negative,
+    NotNegative,
 }
 
 impl Condition {
     fn encode(&self, op: u8) -> Encoded {
         let mut res = u16::from(op) << 8;
         res |= match self {
-            Condition::Zero     => 0x0000,
-            Condition::NotZero  => 0x0001,
-            Condition::Else     => 0x0002,
-            Condition::NotElse  => 0x0003,
+            Condition::Zero        => 0x0000,
+            Condition::NotZero     => 0x0001,
+            Condition::Else        => 0x0002,
+            Condition::NotElse     => 0x0003,
+            Condition::Negative    => 0x0004,
+            Condition::NotNegative => 0x0005,
         };
         Encoded::U16(res)
     }
@@ -399,6 +403,14 @@ fn main() {
         Opcode::OutHi,
         Opcode::OutLo,
         Opcode::CallWord(0x0098),
+        Opcode::OutLo,
+        Opcode::LoadImmediateWord(0xFFFF),
+        Opcode::If(Condition::Negative),
+        Opcode::Load(Source::Const(ByteInWord::Lo, 0x72)),
+        Opcode::OutLo,
+        Opcode::LoadImmediateWord(0xFFFF),
+        Opcode::If(Condition::NotNegative),
+        Opcode::Load(Source::Const(ByteInWord::Lo, 0x72)),
         Opcode::OutLo,
     ];
 

@@ -45,7 +45,9 @@ module decoder (
     output wire        if_zero,
     output wire        if_not_zero,
     output wire        if_else,
-    output wire        if_not_else
+    output wire        if_not_else,
+    output wire        if_neg,
+    output wire        if_not_neg
 );
 
   wire zero_arg = en & ((inst & 16'h8000) == 16'h0000);
@@ -129,8 +131,12 @@ module decoder (
   assign if_not_zero = !inst_if ? 0
     : (inst & 16'h07FF) == 16'h0001;
   assign if_else = !inst_if ? 0
-    : (inst & 16'h07FF) == 16'h0010;
+    : (inst & 16'h07FF) == 16'h0002;
   assign if_not_else = !inst_if ? 0
-    : (inst & 16'h07FF) == 16'h0011;
+    : (inst & 16'h07FF) == 16'h0003;
+  assign if_neg = !inst_if ? 0
+    : (inst & 16'h07FF) == 16'h0004;
+  assign if_not_neg = !inst_if ? 0
+    : (inst & 16'h07FF) == 16'h0005;
 
 endmodule
