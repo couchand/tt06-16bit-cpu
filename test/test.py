@@ -499,6 +499,50 @@ async def test_ops(dut):
 
   await ClockCycles(dut.clk, 10)
 
+  # If Else
+
+  for step in range(0, 8):
+    dut.uio_in.value = 0x10
+    await ClockCycles(dut.clk, 10)
+    dut.uio_in.value = 0x00
+    await ClockCycles(dut.clk, 10)
+
+    while dut.busy.value != 0:
+      await ClockCycles(dut.clk, 10)
+
+    assert dut.halt.value == 0
+    assert dut.trap.value == 0
+
+  await ClockCycles(dut.clk, 10)
+
+  assert dut.uo_out.value == 0xA4
+  assert dut.halt.value == 0
+  assert dut.trap.value == 0
+
+  await ClockCycles(dut.clk, 10)
+
+  # If Not Else
+
+  for step in range(0, 8):
+    dut.uio_in.value = 0x10
+    await ClockCycles(dut.clk, 10)
+    dut.uio_in.value = 0x00
+    await ClockCycles(dut.clk, 10)
+
+    while dut.busy.value != 0:
+      await ClockCycles(dut.clk, 10)
+
+    assert dut.halt.value == 0
+    assert dut.trap.value == 0
+
+  await ClockCycles(dut.clk, 10)
+
+  assert dut.uo_out.value == 0xA5
+  assert dut.halt.value == 0
+  assert dut.trap.value == 0
+
+  await ClockCycles(dut.clk, 10)
+
 @cocotb.test()
 async def test_fib_memo(dut):
   dut.enable_ops.value = 0
