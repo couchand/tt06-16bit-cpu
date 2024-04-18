@@ -229,6 +229,100 @@ fn main() {
         Opcode::Nop,
     ];
 
+    let target = 0x50;
+    let current = 0x52;
+    let cursor = 0x54;
+    let cache = 0x58;
+
+    let br0 = 0x12;
+    let br1 = 0x18;
+    let loop_label = 0x1C;
+    let br2 = 0x3C;
+    let br3 = 0x44;
+    let done = 0x44;
+
+    let insts = [
+        Opcode::Load(Source::Data(ByteInWord::Lo)),
+        Opcode::Store(Source::Ram(AddressingMode::Direct, target)),
+        Opcode::Load(Source::Const(ByteInWord::Lo, 1)),
+        Opcode::Store(Source::Ram(AddressingMode::Direct, cache)),
+        Opcode::Load(Source::Const(ByteInWord::Lo, 1)),
+        Opcode::Store(Source::Ram(AddressingMode::Direct, cache + 2)),
+        Opcode::Load(Source::Ram(AddressingMode::Direct, target)),
+        Opcode::If(Condition::Zero),
+        Opcode::Branch(Target::I11(done - br0)),
+        Opcode::Sub(Source::Const(ByteInWord::Lo, 1)),
+        Opcode::If(Condition::Zero),
+        Opcode::Branch(Target::I11(done - br1)),
+        Opcode::Load(Source::Const(ByteInWord::Lo, 2)),
+        Opcode::Store(Source::Ram(AddressingMode::Direct, current)),
+        // loop
+        Opcode::Load(Source::Ram(AddressingMode::Direct, current)),
+        Opcode::Add(Source::Ram(AddressingMode::Direct, current)),
+        Opcode::Add(Source::Const(ByteInWord::Lo, cache)),
+        Opcode::Store(Source::Ram(AddressingMode::Direct, cursor)),
+        Opcode::Sub(Source::Const(ByteInWord::Lo, 2)),
+        Opcode::LoadIndirect(AddressingMode::Direct),
+        Opcode::Store(Source::Ram(AddressingMode::Indirect, cursor)),
+        Opcode::Load(Source::Ram(AddressingMode::Direct, cursor)),
+        Opcode::Sub(Source::Const(ByteInWord::Lo, 4)),
+        Opcode::LoadIndirect(AddressingMode::Direct),
+        Opcode::Add(Source::Ram(AddressingMode::Indirect, cursor)),
+        Opcode::Store(Source::Ram(AddressingMode::Indirect, cursor)),
+        Opcode::OutLo,
+        Opcode::Nop,
+        Opcode::Load(Source::Ram(AddressingMode::Direct, target)),
+        Opcode::Sub(Source::Ram(AddressingMode::Direct, current)),
+        Opcode::If(Condition::Zero),
+        Opcode::Branch(Target::I11(done - br2)),
+        Opcode::Load(Source::Ram(AddressingMode::Direct, current)),
+        Opcode::Add(Source::Const(ByteInWord::Lo, 1)),
+        Opcode::Store(Source::Ram(AddressingMode::Direct, current)),
+        Opcode::Branch(Target::I11(loop_label - br3)),
+        // done
+        Opcode::Load(Source::Ram(AddressingMode::Direct, target)),
+        Opcode::Add(Source::Ram(AddressingMode::Direct, target)),
+        Opcode::Add(Source::Const(ByteInWord::Lo, cache)),
+        Opcode::LoadIndirect(AddressingMode::Direct),
+        Opcode::OutLo,
+        Opcode::Halt,
+        // target
+        Opcode::Nop,
+        Opcode::Nop,
+        // current
+        Opcode::Nop,
+        Opcode::Nop,
+        // cursor
+        Opcode::Nop,
+        Opcode::Nop,
+        // cache
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+    ];
+
     let encoded = insts.iter().map(|i| i.encode()).collect::<Vec<_>>();
 
     let bytes = {

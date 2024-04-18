@@ -4,7 +4,10 @@
 // Simulation of a SPI RAM that accepts reads and writes using
 // commands 03h and 02h.
 
-module sim_spi_ram (
+// modification Andrew Dona-Couch: file parameter to #() syntax
+module sim_spi_ram #(
+    parameter INIT_FILE = ""
+)(
     input spi_clk,
     input spi_mosi,
     input spi_select,
@@ -24,7 +27,6 @@ module sim_spi_ram (
 
     reg [31:0] data [0:16383];
 
-    parameter INIT_FILE = "";
     initial begin
         if (INIT_FILE != "")
             $readmemh(INIT_FILE, data);

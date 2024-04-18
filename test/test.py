@@ -6,7 +6,9 @@ from cocotb.clock import Clock
 from cocotb.triggers import ClockCycles
 
 @cocotb.test()
-async def test_project(dut):
+async def test_ops(dut):
+  dut.enable_ops = 1
+  dut.enable_fib_memo = 0
   dut._log.info("Start")
 
   clock = Clock(dut.clk, 10, units="us")
@@ -26,6 +28,8 @@ async def test_project(dut):
   await ClockCycles(dut.clk, 10)
   dut.rst_n.value = 1
   await ClockCycles(dut.clk, 10)
+
+  dut._log.info("Test")
 
   # With immediates
 
@@ -340,3 +344,49 @@ async def test_project(dut):
   assert dut.trap.value == 0
 
   await ClockCycles(dut.clk, 10)
+
+@cocotb.test()
+async def test_fib_memo(dut):
+  dut.enable_ops = 0
+  dut.enable_fib_memo = 1
+
+  dut._log.info("Start")
+
+  clock = Clock(dut.clk, 10, units="us")
+  cocotb.start_soon(clock.start())
+
+  debug_clock = Clock(dut.debug_clk, 10, units="us")
+  cocotb.start_soon(debug_clock.start())
+
+  # Reset
+  dut._log.info("Reset")
+  dut.ena.value = 1
+  dut.ui_in.value = 0
+  dut.uio_in.value = 0
+  dut.rst_n.value = 0
+  dut.debug_clk.value = 0
+  dut.debug_addr.value = 0
+  await ClockCycles(dut.clk, 10)
+  dut.rst_n.value = 1
+  await ClockCycles(dut.clk, 10)
+
+  dut.debug_addr = 0x17
+
+  dut._log.info("Test")
+  dut.ui_in.value = 6
+  dut.uio_in.value = 0x10
+  await ClockCycles(dut.clk, 1)
+  dut.uio_in.value = 0
+  while dut.halt.value != 1:
+    dut.uio_in.value = 0x10
+    await ClockCycles(dut.clk, 1)
+    dut.uio_in.value = 0
+
+    while dut.busy.value == 1:
+      await ClockCycles(dut.clk, 1)
+
+    await ClockCycles(dut.clk, 10)
+    dut.ui_in.value = 0
+
+  assert dut.halt.value == 1
+  assert dut.uo_out.value == 0x0D

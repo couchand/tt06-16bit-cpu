@@ -51,19 +51,44 @@ module tb ();
       .rst_n  (rst_n)     // not reset
   );
 
+  reg enable_ops, enable_fib_memo;
+
+  wire spi_select_ops = spi_select & enable_ops;
+  wire spi_select_fib_memo = spi_select & enable_fib_memo;
+
+  assign spi_miso = enable_ops ? spi_miso_ops
+    : enable_fib_memo ? spi_miso_fib_memo
+    : 0;
+
   reg debug_clk;
   reg [23:0] debug_addr;
-  wire [31:0] debug_data;
-  sim_spi_ram spi_ram(
+
+  wire [31:0] debug_data_ops;
+  wire spi_miso_ops;
+  sim_spi_ram #(
+    .INIT_FILE("ops.mem")
+  ) spi_ram_ops (
     .spi_clk(spi_clk),
     .spi_mosi(spi_mosi),
-    .spi_select(spi_select),
-    .spi_miso(spi_miso),
+    .spi_select(spi_select_ops),
+    .spi_miso(spi_miso_ops),
     .debug_clk(debug_clk),
     .debug_addr(debug_addr),
-    .debug_data(debug_data)
+    .debug_data(debug_data_ops)
   );
 
-  defparam spi_ram.INIT_FILE = "test.mem";
+  wire [31:0] debug_data_fib_memo;
+  wire spi_miso_fib_memo;
+  sim_spi_ram #(
+    .INIT_FILE("fib_memo.mem")
+  ) spi_ram_fib_memo (
+    .spi_clk(spi_clk),
+    .spi_mosi(spi_mosi),
+    .spi_select(spi_select_fib_memo),
+    .spi_miso(spi_miso_fib_memo),
+    .debug_clk(debug_clk),
+    .debug_addr(debug_addr),
+    .debug_data(debug_data_fib_memo)
+  );
 
 endmodule
