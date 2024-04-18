@@ -89,7 +89,7 @@ module cpu (
     : ((state == ST_INST_EXEC2) & source_indirect) ? ram_data_out
     : 0;
   wire ram_start_read = (state == ST_LOAD_INST0) ? 1
-    : ((state == ST_INST_EXEC0) & (source_ram | source_indirect) & ~inst_store) ? 1
+    : ((state == ST_INST_EXEC0) & ((source_ram & ~inst_store) | source_indirect)) ? 1
     : ((state == ST_INST_EXEC2) & source_indirect) ? 1
     : 0;
   wire [15:0] ram_data_in = ((state == ST_INST_EXEC0) & source_ram & inst_store) ? accum
@@ -316,7 +316,9 @@ module cpu (
               state <= ST_TRAP;
             end
           end else if (source_indirect) begin
-            state <= ST_INST_EXEC2;
+            if (!ram_busy) begin
+              state <= ST_INST_EXEC2;
+            end
           end else begin
             state <= ST_TRAP;
           end
