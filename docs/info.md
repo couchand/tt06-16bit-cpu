@@ -17,7 +17,7 @@ A little 16-bit CPU accumulator machine.
 2. Reset the CPU.
 3. Raise `step` high for a clock for each instruction to step.
 4. Hold `step` high to run free (you are advised to handle `trap`).
-5. Observe `halt` and `trap` for the module status.
+5. Observe `busy`, `halt` and `trap` for the module status.
 
 ## External hardware
 
