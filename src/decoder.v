@@ -30,6 +30,7 @@ module decoder (
     output wire        inst_drop,
     output wire        inst_return,
     output wire        inst_out_lo,
+    output wire        inst_out_hi,
     output wire        inst_set_dp,
     output wire        source_imm,
     output wire        source_ram,
@@ -52,6 +53,7 @@ module decoder (
   assign inst_return = en & ((inst >> 8) == 16'h0006);
   assign inst_not = en & ((inst >> 8) == 16'h0007);
   assign inst_out_lo = en & ((inst >> 8) == 16'h0008);
+  assign inst_out_hi = en & ((inst >> 8) == 16'h0009);
   assign inst_set_dp = en & ((inst >> 8) == 16'h000A);
   wire inst_load_indirect = en & ((inst >> 8) == 16'h0044);
 
