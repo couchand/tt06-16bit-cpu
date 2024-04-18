@@ -8,8 +8,10 @@
 module decoder (
     input  wire        en,
     input  wire [15:0] inst,
+    input  wire [15:0] accum,
     input  wire [7:0]  data,
     output wire [15:0] rhs,
+    output wire [1:0]  bytes,
     output wire        inst_nop,
     output wire        inst_load,
     output wire        inst_store,
@@ -35,10 +37,14 @@ module decoder (
   assign inst_nop = en & ((inst >> 8) == 0);
   assign inst_not = en & ((inst >> 8) == 7);
   assign inst_out_lo = en & ((inst >> 8) == 8);
+  wire inst_load_indirect = en & ((inst >> 8) == 16'h0044);
+
+  assign bytes = zero_arg ? 1 : 2;
 
   wire one_arg = en & ((inst & 16'hC000) == 16'h8000);
 
-  assign inst_load = en & ((inst & 16'hF800) == 16'h8000);
+  wire inst_load_main = en & ((inst & 16'hF800) == 16'h8000);
+  assign inst_load = inst_load_main | inst_load_indirect;
   assign inst_store = en & ((inst & 16'hF800) == 16'h9000);
   assign inst_add  = en & ((inst & 16'hF800) == 16'h8800);
   assign inst_sub  = en & ((inst & 16'hF800) == 16'h9800);
@@ -53,10 +59,12 @@ module decoder (
   wire source_data  = !one_arg ? 0 : (inst & 16'h0600) == 16'h0200;
 
   assign source_imm = source_const | source_data;
-  assign source_ram = !one_arg ? 0 : (inst & 16'h0400) == 16'h0400;
+  assign source_ram = one_arg ? (inst & 16'h0400) == 16'h0400
+    : inst_load_indirect;
 
   assign rhs = !en ? 0
     : inst_branch ? {{5{inst[10]}}, inst[10:0]}
+    : inst_load_indirect ? accum
     : (inst & 16'h0700) == 16'h0000 ? {8'h00, inst[7:0]}
     : (inst & 16'h0700) == 16'h0100 ? {inst[7:0], 8'h00}
     : (inst & 16'h0700) == 16'h0200 ? {8'h00, data}
