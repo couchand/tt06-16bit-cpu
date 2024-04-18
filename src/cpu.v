@@ -36,7 +36,8 @@ module cpu (
   wire [1:0] inst_bytes_raw;
   wire [15:0] inst_bytes = {14'b0, inst_bytes_raw};
   wire inst_nop, inst_load, inst_store, inst_add, inst_sub, inst_and, inst_or, inst_xor;
-  wire inst_branch, inst_if, inst_out_lo, inst_push, inst_pop, inst_not, inst_halt, inst_set_dp;
+  wire inst_branch, inst_call, inst_if, inst_push, inst_pop, inst_return, inst_not;
+  wire inst_out_lo, inst_halt, inst_set_dp;
   wire source_imm, source_ram, source_indirect;
   wire relative_stack, relative_data;
   wire if_zero, if_not_zero, if_else, if_not_else;
@@ -60,9 +61,11 @@ module cpu (
     .inst_xor(inst_xor),
     .inst_not(inst_not),
     .inst_branch(inst_branch),
+    .inst_call(inst_call),
     .inst_if(inst_if),
     .inst_push(inst_push),
     .inst_pop(inst_pop),
+    .inst_return(inst_return),
     .inst_out_lo(inst_out_lo),
     .inst_set_dp(inst_set_dp),
     .source_imm(source_imm),
@@ -95,23 +98,24 @@ module cpu (
   wire [15:0] sp_minus_two = sp - 2;
 
   wire [15:0] ram_addr = (state == ST_LOAD_INST0) ? pc
-    : ((state == ST_INST_EXEC0) & inst_push) ? sp_minus_two
-    : ((state == ST_INST_EXEC0) & inst_pop) ? sp
+    : ((state == ST_INST_EXEC0) & (inst_push | inst_call)) ? sp_minus_two
+    : ((state == ST_INST_EXEC0) & (inst_pop | inst_return)) ? sp
     : ((state == ST_INST_EXEC0) & (source_ram | source_indirect))
       ? ((relative_stack ? sp : relative_data ? dp : 0) + rhs)
     : ((state == ST_INST_EXEC2) & source_indirect) ? ram_data_out
     : 0;
   wire ram_start_read = (state == ST_LOAD_INST0) ? 1
     : ((state == ST_INST_EXEC0) & ((source_ram & ~inst_store) | source_indirect)) ? 1
-    : ((state == ST_INST_EXEC0) & inst_pop) ? 1
+    : ((state == ST_INST_EXEC0) & (inst_pop | inst_return)) ? 1
     : ((state == ST_INST_EXEC2) & source_indirect) ? 1
     : 0;
   wire [15:0] ram_data_in = ((state == ST_INST_EXEC0) & source_ram & inst_store) ? accum
     : ((state == ST_INST_EXEC0) & inst_push) ? accum
+    : ((state == ST_INST_EXEC0) & inst_call) ? pc
     : ((state == ST_INST_EXEC2) & source_indirect & inst_store) ? accum
     : 0;
   wire ram_start_write = ((state == ST_INST_EXEC0) & source_ram & inst_store) ? 1
-    : ((state == ST_INST_EXEC0) & inst_push) ? 1
+    : ((state == ST_INST_EXEC0) & (inst_push | inst_call)) ? 1
     : ((state == ST_INST_EXEC2) & source_indirect & inst_store) ? 1
     : 0;
   wire [15:0] ram_data_out;
@@ -273,6 +277,20 @@ module cpu (
           end else begin
             pc <= pc + inst_bytes + rhs;
           end
+        end else if (inst_call) begin
+          if (skip) begin
+            pc <= pc + inst_bytes;
+            state <= ST_INIT;
+          end else begin
+            state <= ST_INST_EXEC1;
+          end
+        end else if (inst_return) begin
+          if (skip) begin
+            pc <= pc + inst_bytes;
+            state <= ST_INIT;
+          end else begin
+            state <= ST_INST_EXEC1;
+          end
         end else if (inst_if) begin
           pc <= pc + inst_bytes;
           state <= ST_INIT;
@@ -314,6 +332,14 @@ module cpu (
             zero <= ram_data_out == 0;
             state <= ST_INIT;
             pc <= pc + inst_bytes;
+          end else if (inst_call) begin
+            sp <= sp_minus_two;
+            state <= ST_INIT;
+            pc <= rhs;
+          end else if (inst_return) begin
+            sp <= sp + 2;
+            state <= ST_INIT;
+            pc <= ram_data_out + 2;
           end else if (source_ram) begin
             if (inst_load) begin
               accum <= ram_data_out;

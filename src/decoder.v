@@ -23,9 +23,11 @@ module decoder (
     output wire        inst_xor,
     output wire        inst_not,
     output wire        inst_branch,
+    output wire        inst_call,
     output wire        inst_if,
     output wire        inst_push,
     output wire        inst_pop,
+    output wire        inst_return,
     output wire        inst_out_lo,
     output wire        inst_set_dp,
     output wire        source_imm,
@@ -45,6 +47,7 @@ module decoder (
   assign inst_halt = en & ((inst >> 8) == 16'h0001);
   assign inst_push = en & ((inst >> 8) == 16'h0004);
   assign inst_pop = en & ((inst >> 8) == 16'h0005);
+  assign inst_return = en & ((inst >> 8) == 16'h0006);
   assign inst_not = en & ((inst >> 8) == 16'h0007);
   assign inst_out_lo = en & ((inst >> 8) == 16'h0008);
   assign inst_set_dp = en & ((inst >> 8) == 16'h000A);
@@ -64,6 +67,7 @@ module decoder (
   assign inst_xor  = en & ((inst & 16'hF800) == 16'hB000);
 
   assign inst_branch = en & ((inst & 16'hF800) == 16'hC000);
+  assign inst_call = en & ((inst & 16'hF800) == 16'hD000);
   assign inst_if = en & ((inst & 16'hF800) == 16'hF000);
 
   wire source_const = !one_arg ? 0 : (inst & 16'h0600) == 16'h0000;
@@ -82,7 +86,7 @@ module decoder (
     : 0;
 
   assign rhs = !en ? 0
-    : inst_branch ? {{5{inst[10]}}, inst[10:0]}
+    : (inst_branch | inst_call) ? {{5{inst[10]}}, inst[10:0]}
     : inst_load_indirect ? accum
     : (inst & 16'h0700) == 16'h0000 ? {8'h00, inst[7:0]}
     : (inst & 16'h0700) == 16'h0100 ? {inst[7:0], 8'h00}

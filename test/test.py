@@ -389,6 +389,30 @@ async def test_ops(dut):
 
   await ClockCycles(dut.clk, 10)
 
+  # Call/Return
+
+  dut.debug_addr.value = 0x3FFF
+
+  for step in range(0, 6):
+    dut.uio_in.value = 0x10
+    await ClockCycles(dut.clk, 10)
+    dut.uio_in.value = 0x00
+    await ClockCycles(dut.clk, 10)
+
+    while dut.busy.value != 0:
+      await ClockCycles(dut.clk, 10)
+
+    assert dut.halt.value == 0
+    assert dut.trap.value == 0
+
+  await ClockCycles(dut.clk, 10)
+
+  assert dut.uo_out.value == 0x42
+  assert dut.halt.value == 0
+  assert dut.trap.value == 0
+
+  await ClockCycles(dut.clk, 10)
+
 @cocotb.test()
 async def test_fib_memo(dut):
   dut.enable_ops.value = 0

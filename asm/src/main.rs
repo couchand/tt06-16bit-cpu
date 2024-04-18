@@ -5,6 +5,7 @@ enum Opcode {
     OutLo,
     Push,
     Pop,
+    Return,
     Not,
     SetDataPointer,
     LoadIndirect,// TODO: (AddressingMode),
@@ -16,6 +17,7 @@ enum Opcode {
     Or(Source),
     Xor(Source),
     Branch(Target),
+    Call(Target),
     If(Condition),
 }
 
@@ -27,6 +29,7 @@ impl Opcode {
             Opcode::Halt => Encoded::U8(0x01),
             Opcode::Push => Encoded::U8(0x04),
             Opcode::Pop => Encoded::U8(0x05),
+            Opcode::Return => Encoded::U8(0x06),
             Opcode::Not => Encoded::U8(0x07),
             Opcode::OutLo => Encoded::U8(0x08),
             Opcode::SetDataPointer => Encoded::U8(0x0A),
@@ -40,6 +43,7 @@ impl Opcode {
             Opcode::Or(s) => s.encode(0xA8),
             Opcode::Xor(s) => s.encode(0xB0),
             Opcode::Branch(t) => t.encode(0xC0),
+            Opcode::Call(t) => t.encode(0xD0),
             Opcode::If(c) => c.encode(0xF0),
         }
     }
@@ -113,6 +117,7 @@ impl ByteInWord {
 
 enum Target {
     I11(i16),
+    U11(u16),
 }
 
 impl Target {
@@ -120,6 +125,7 @@ impl Target {
         let mut res = u16::from(op) << 8;
         res |= match self {
             Target::I11(v) => (*v as u16) & 0x07FF,
+            Target::U11(v) => v & 0x07FF,
         };
         Encoded::U16(res)
     }
@@ -257,6 +263,18 @@ fn main() {
         Opcode::Nop,
         Opcode::Nop,
         Opcode::Nop,
+        // 0x90
+        Opcode::Call(Target::U11(0x98)),
+        Opcode::OutLo,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Nop,
+        Opcode::Branch(Target::I11(4)),
+        // callee 0x98
+        Opcode::Load(Source::Const(ByteInWord::Lo, 0x42)),
+        Opcode::Return,
+        Opcode::Nop,
+        // after callee 0x9C
         Opcode::Nop,
         Opcode::Nop,
         Opcode::Nop,
