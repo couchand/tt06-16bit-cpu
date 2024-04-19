@@ -7,13 +7,6 @@ from cocotb.triggers import ClockCycles
 
 @cocotb.test()
 async def test_ops(dut):
-  dut.enable_ops.value = 1
-  dut.enable_op_halt.value = 0
-  dut.enable_op_trap.value = 0
-  dut.enable_fib_memo.value = 0
-  dut.enable_fib_framed.value = 0
-  dut.enable_fib_recursive.value = 0
-
   dut._log.info("Start")
 
   clock = Clock(dut.clk, 10, units="us")
@@ -32,6 +25,7 @@ async def test_ops(dut):
   dut.debug_addr.value = 0
   await ClockCycles(dut.clk, 10)
   dut.rst_n.value = 1
+  dut.enable_ops.value = 1
   await ClockCycles(dut.clk, 10)
 
   dut._log.info("Test")
@@ -881,13 +875,6 @@ async def test_ops(dut):
 
 @cocotb.test()
 async def test_op_halt(dut):
-  dut.enable_ops.value = 0
-  dut.enable_op_halt.value = 1
-  dut.enable_op_trap.value = 0
-  dut.enable_fib_memo.value = 0
-  dut.enable_fib_framed.value = 0
-  dut.enable_fib_recursive.value = 0
-
   dut._log.info("Start")
 
   clock = Clock(dut.clk, 10, units="us")
@@ -906,6 +893,7 @@ async def test_op_halt(dut):
   dut.debug_addr.value = 0
   await ClockCycles(dut.clk, 10)
   dut.rst_n.value = 1
+  dut.enable_op_halt.value = 1
   await ClockCycles(dut.clk, 10)
 
   for step in range(0, 14):
@@ -954,13 +942,6 @@ async def test_op_halt(dut):
 
 @cocotb.test()
 async def test_op_trap(dut):
-  dut.enable_ops.value = 0
-  dut.enable_op_halt.value = 0
-  dut.enable_op_trap.value = 1
-  dut.enable_fib_memo.value = 0
-  dut.enable_fib_framed.value = 0
-  dut.enable_fib_recursive.value = 0
-
   dut._log.info("Start")
 
   clock = Clock(dut.clk, 10, units="us")
@@ -979,6 +960,7 @@ async def test_op_trap(dut):
   dut.debug_addr.value = 0
   await ClockCycles(dut.clk, 10)
   dut.rst_n.value = 1
+  dut.enable_op_trap.value = 1
   await ClockCycles(dut.clk, 10)
 
   for step in range(0, 14):
@@ -1055,13 +1037,6 @@ async def test_op_trap(dut):
 
 @cocotb.test()
 async def test_fib_memo(dut):
-  dut.enable_ops.value = 0
-  dut.enable_op_halt.value = 0
-  dut.enable_op_trap.value = 0
-  dut.enable_fib_memo.value = 1
-  dut.enable_fib_framed.value = 0
-  dut.enable_fib_recursive.value = 0
-
   dut._log.info("Start")
 
   clock = Clock(dut.clk, 10, units="us")
@@ -1080,6 +1055,7 @@ async def test_fib_memo(dut):
   dut.debug_addr.value = 0
   await ClockCycles(dut.clk, 10)
   dut.rst_n.value = 1
+  dut.enable_fib_memo.value = 1
   await ClockCycles(dut.clk, 10)
 
   dut.debug_addr.value = 0x17
@@ -1107,13 +1083,6 @@ async def test_fib_memo(dut):
 
 @cocotb.test()
 async def test_fib_framed(dut):
-  dut.enable_ops.value = 0
-  dut.enable_op_halt.value = 0
-  dut.enable_op_trap.value = 0
-  dut.enable_fib_memo.value = 0
-  dut.enable_fib_framed.value = 1
-  dut.enable_fib_recursive.value = 0
-
   dut._log.info("Start")
 
   clock = Clock(dut.clk, 10, units="us")
@@ -1132,6 +1101,7 @@ async def test_fib_framed(dut):
   dut.debug_addr.value = 0
   await ClockCycles(dut.clk, 10)
   dut.rst_n.value = 1
+  dut.enable_fib_framed.value = 1
   await ClockCycles(dut.clk, 10)
 
   dut.debug_addr.value = 0x17
@@ -1159,13 +1129,6 @@ async def test_fib_framed(dut):
 
 @cocotb.test()
 async def test_fib_recursive(dut):
-  dut.enable_ops.value = 0
-  dut.enable_op_halt.value = 0
-  dut.enable_op_trap.value = 0
-  dut.enable_fib_memo.value = 0
-  dut.enable_fib_framed.value = 0
-  dut.enable_fib_recursive.value = 1
-
   dut._log.info("Start")
 
   clock = Clock(dut.clk, 10, units="us")
@@ -1184,6 +1147,7 @@ async def test_fib_recursive(dut):
   dut.debug_addr.value = 0
   await ClockCycles(dut.clk, 10)
   dut.rst_n.value = 1
+  dut.enable_fib_recursive.value = 1
   await ClockCycles(dut.clk, 10)
 
   dut.debug_addr.value = 0x3FFB

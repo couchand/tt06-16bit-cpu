@@ -156,4 +156,15 @@ module tb ();
     .debug_data(debug_data_fib_recursive)
   );
 
+  always @(posedge clk) begin
+    if (!rst_n) begin
+      enable_ops <= 0;
+      enable_op_halt <= 0;
+      enable_op_trap <= 0;
+      enable_fib_memo <= 0;
+      enable_fib_framed <= 0;
+      enable_fib_recursive <= 0;
+    end
+  end
+
 endmodule
