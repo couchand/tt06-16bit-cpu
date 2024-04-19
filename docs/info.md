@@ -69,7 +69,7 @@ Test | `0000 1011` | Set the status flags based on the accumulator value | `----
 Branch Indirect | `0000 1100` | Add the accumulator to the program counter | `---- ----`
 Call Indirect | `0000 1101` | Call the subroutine address in the accumulator | `---- ----`
 Status        | `0001 0000` | Load the status flags into the accumulator | `---- ----`
-Load Indirect | `0100 01mm` | Load a word from the address in the accumulator, using addressing mode `m` (bug: modes not supported) | `---- ----`
+Load Indirect | `0100 01mm` | Load a word from the address in the accumulator, using addressing mode `m` | `---- ----`
 
 
 ### Two-byte instructions

@@ -17,7 +17,7 @@ enum Opcode {
     Not,
     SetDataPointer,
     Test,
-    LoadIndirect,// TODO: (AddressingMode),
+    LoadIndirect(RelativeTo, AddressingMode),
     Load(Source),
     Store(Source),
     Add(Source),
@@ -52,8 +52,7 @@ impl Opcode {
             Opcode::Status => Encoded::U8(0x10),
             Opcode::CallWord(w) => Encoded::U8U16(0x3E, *w),
             Opcode::LoadImmediateWord(w) => Encoded::U8U16(0x3F, *w),
-            //Opcode::LoadIndirect(m) => Encoded::U8(0x44 | m.encode()),
-            Opcode::LoadIndirect => Encoded::U8(0x44),
+            Opcode::LoadIndirect(r, m) => Encoded::U8(0x44 | r.encode() | m.encode()),
             Opcode::Load(s) => s.encode(0x80),
             Opcode::Store(s) => s.encode(0x90),
             Opcode::Add(s) => s.encode(0x88),
@@ -197,6 +196,8 @@ enum Condition {
     NotElse,
     Negative,
     NotNegative,
+    Carry,
+    NotCarry,
 }
 
 impl Condition {
@@ -304,7 +305,7 @@ fn main() {
         Opcode::Not,
         Opcode::OutLo,
         Opcode::Load(Source::Const(ByteInWord::Lo, 0x20)),
-        Opcode::LoadIndirect,
+        Opcode::LoadIndirect(RelativeTo::DataPointer, AddressingMode::Direct),
         Opcode::OutLo,
         Opcode::Load(Source::Const(ByteInWord::Lo, 0x22)),
         Opcode::Store(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, 0x1E)),
@@ -454,11 +455,11 @@ fn main() {
         Opcode::Add(Source::Const(ByteInWord::Lo, cache)),
         Opcode::Store(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, cursor)),
         Opcode::Sub(Source::Const(ByteInWord::Lo, 2)),
-        Opcode::LoadIndirect,
+        Opcode::LoadIndirect(RelativeTo::DataPointer, AddressingMode::Direct),
         Opcode::Store(Source::Ram(RelativeTo::DataPointer, AddressingMode::Indirect, cursor)),
         Opcode::Load(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, cursor)),
         Opcode::Sub(Source::Const(ByteInWord::Lo, 4)),
-        Opcode::LoadIndirect,
+        Opcode::LoadIndirect(RelativeTo::DataPointer, AddressingMode::Direct),
         Opcode::Add(Source::Ram(RelativeTo::DataPointer, AddressingMode::Indirect, cursor)),
         Opcode::Store(Source::Ram(RelativeTo::DataPointer, AddressingMode::Indirect, cursor)),
         Opcode::OutLo,
@@ -475,7 +476,7 @@ fn main() {
         Opcode::Load(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, target)),
         Opcode::Add(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, target)),
         Opcode::Add(Source::Const(ByteInWord::Lo, cache)),
-        Opcode::LoadIndirect,
+        Opcode::LoadIndirect(RelativeTo::DataPointer, AddressingMode::Direct),
         Opcode::OutLo,
         Opcode::Halt,
         // target
@@ -557,11 +558,11 @@ fn main() {
         Opcode::Store(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, pointer)),
         Opcode::Load(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, cursor)),
         Opcode::Sub(Source::Const(ByteInWord::Lo, 2)),
-        Opcode::LoadIndirect,
+        Opcode::LoadIndirect(RelativeTo::DataPointer, AddressingMode::Direct),
         Opcode::Store(Source::Ram(RelativeTo::DataPointer, AddressingMode::Indirect, pointer)),
         Opcode::Load(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, cursor)),
         Opcode::Sub(Source::Const(ByteInWord::Lo, 4)),
-        Opcode::LoadIndirect,
+        Opcode::LoadIndirect(RelativeTo::DataPointer, AddressingMode::Direct),
         Opcode::Add(Source::Ram(RelativeTo::DataPointer, AddressingMode::Indirect, pointer)),
         Opcode::Store(Source::Ram(RelativeTo::DataPointer, AddressingMode::Indirect, pointer)),
         Opcode::OutLo,
@@ -578,7 +579,7 @@ fn main() {
         Opcode::Load(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, target)),
         Opcode::Add(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, target)),
         Opcode::Add(Source::Const(ByteInWord::Lo, cache)),
-        Opcode::LoadIndirect,
+        Opcode::LoadIndirect(RelativeTo::DataPointer, AddressingMode::Direct),
         Opcode::OutLo,
         Opcode::Halt,
         // target
@@ -991,6 +992,47 @@ fn main() {
         Opcode::Status,
         Opcode::And(Source::Const(ByteInWord::Lo, 0x04)),
         Opcode::If(Condition::Zero),
+        Opcode::Trap,
+        // done
+        Opcode::Load(Source::Const(ByteInWord::Lo, 1)),
+        Opcode::OutLo,
+    ]).unwrap();
+
+    run("op_load_indirect.mem", &[
+        Opcode::Branch(Target::I11(4)), // skip over these
+        Opcode::Text(0),
+        Opcode::Text(0x04), // pointer to V
+        Opcode::Text(0),
+        Opcode::Text(0x42),
+        Opcode::Load(Source::Const(ByteInWord::Lo, 0x04)), // pointer to second ^
+        Opcode::Push,
+        // data direct
+        Opcode::Load(Source::Const(ByteInWord::Lo, 0x02)), // pointer to first ^
+        Opcode::LoadIndirect(RelativeTo::DataPointer, AddressingMode::Direct),
+        // assert eq 0x04
+        Opcode::Sub(Source::Const(ByteInWord::Lo, 0x04)),
+        Opcode::If(Condition::NotZero),
+        Opcode::Trap,
+        // data indirect
+        Opcode::Load(Source::Const(ByteInWord::Lo, 0x02)), // pointer to first ^
+        Opcode::LoadIndirect(RelativeTo::DataPointer, AddressingMode::Indirect),
+        // assert eq 0x42
+        Opcode::Sub(Source::Const(ByteInWord::Lo, 0x42)),
+        Opcode::If(Condition::NotZero),
+        Opcode::Trap,
+        // stack direct
+        Opcode::Load(Source::Const(ByteInWord::Lo, 0x00)), // top of stack
+        Opcode::LoadIndirect(RelativeTo::StackPointer, AddressingMode::Direct),
+        // assert eq 0x04
+        Opcode::Sub(Source::Const(ByteInWord::Lo, 0x04)),
+        Opcode::If(Condition::NotZero),
+        Opcode::Trap,
+        // stack indirect
+        Opcode::Load(Source::Const(ByteInWord::Lo, 0x00)), // top of stack
+        Opcode::LoadIndirect(RelativeTo::StackPointer, AddressingMode::Indirect),
+        // assert eq 0x42
+        Opcode::Sub(Source::Const(ByteInWord::Lo, 0x42)),
+        Opcode::If(Condition::NotZero),
         Opcode::Trap,
         // done
         Opcode::Load(Source::Const(ByteInWord::Lo, 1)),

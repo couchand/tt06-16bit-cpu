@@ -71,7 +71,7 @@ module decoder (
   assign inst_status = en & ((inst >> 8) == 16'h0010);
   assign inst_call_word = en & ((inst >> 8) == 16'h003E);
   assign inst_load_word = en & ((inst >> 8) == 16'h003F);
-  wire inst_load_indirect = en & ((inst >> 8) == 16'h0044);
+  wire inst_load_indirect = en & (((inst >> 8) & 16'h00FC) == 16'h0044);
 
   assign bytes = zero_arg ? 1 : 2;
 
@@ -109,9 +109,8 @@ module decoder (
   wire source_none  = inst_not | inst_test;
 
   assign source_imm = source_const | source_data | source_none;
-  assign source_ram = one_arg ? (inst & 16'h0500) == 16'h0400
-    : inst_load_indirect;
-  assign source_indirect = one_arg & ((inst & 16'h0500) == 16'h0500);
+  assign source_ram = (one_arg | inst_load_indirect) & ((inst & 16'h0500) == 16'h0400);
+  assign source_indirect = (one_arg | inst_load_indirect) & ((inst & 16'h0500) == 16'h0500);
 
   assign relative_data = (source_ram | source_indirect)
     ? (inst & 16'h0200) == 16'h0000

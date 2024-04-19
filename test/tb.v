@@ -53,7 +53,7 @@ module tb ();
 
   reg enable_ops, enable_fault, enable_op_halt, enable_op_trap;
   reg enable_op_push, enable_op_pop, enable_op_drop;
-  reg enable_op_test, enable_op_status;
+  reg enable_op_test, enable_op_status, enable_op_load_indirect;
   reg enable_op_add_carry, enable_op_sub_carry, enable_op_not_carry, enable_op_shift_carry;
   reg enable_fib_memo, enable_fib_framed, enable_fib_recursive;
 
@@ -66,6 +66,7 @@ module tb ();
   wire spi_select_op_drop = spi_select & enable_op_drop;
   wire spi_select_op_test = spi_select & enable_op_test;
   wire spi_select_op_status = spi_select & enable_op_status;
+  wire spi_select_op_load_indirect = spi_select & enable_op_load_indirect;
   wire spi_select_op_add_carry = spi_select & enable_op_add_carry;
   wire spi_select_op_sub_carry = spi_select & enable_op_sub_carry;
   wire spi_select_op_not_carry = spi_select & enable_op_not_carry;
@@ -83,6 +84,7 @@ module tb ();
     : enable_op_drop ? spi_miso_op_drop
     : enable_op_test ? spi_miso_op_test
     : enable_op_status ? spi_miso_op_status
+    : enable_op_load_indirect ? spi_miso_op_load_indirect
     : enable_op_add_carry ? spi_miso_op_add_carry
     : enable_op_sub_carry ? spi_miso_op_sub_carry
     : enable_op_not_carry ? spi_miso_op_not_carry
@@ -221,6 +223,20 @@ module tb ();
     .debug_data(debug_data_op_status)
   );
 
+  wire [31:0] debug_data_op_load_indirect;
+  wire spi_miso_op_load_indirect;
+  sim_spi_ram #(
+    .INIT_FILE("mem/op_load_indirect.mem")
+  ) spi_ram_op_load_indirect (
+    .spi_clk(spi_clk),
+    .spi_mosi(spi_mosi),
+    .spi_select(spi_select_op_load_indirect),
+    .spi_miso(spi_miso_op_load_indirect),
+    .debug_clk(debug_clk),
+    .debug_addr(debug_addr),
+    .debug_data(debug_data_op_load_indirect)
+  );
+
   wire [31:0] debug_data_op_add_carry;
   wire spi_miso_op_add_carry;
   sim_spi_ram #(
@@ -330,6 +346,7 @@ module tb ();
       enable_op_drop <= 0;
       enable_op_test <= 0;
       enable_op_status <= 0;
+      enable_op_load_indirect <= 0;
       enable_op_add_carry <= 0;
       enable_op_sub_carry <= 0;
       enable_op_not_carry <= 0;
