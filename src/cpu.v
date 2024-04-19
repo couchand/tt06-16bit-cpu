@@ -30,12 +30,13 @@ module cpu (
   reg [15:0] sp;
   reg zero;
   reg neg;
+  reg carry;
   reg skip;
   reg skipped;
 
   wire [15:0] alu_rhs = (state == ST_INST_EXEC0) ? rhs : ram_data_out;
   wire [15:0] alu_result;
-  wire alu_zero, alu_neg, is_alu_inst;
+  wire alu_zero, alu_neg, alu_carry, is_alu_inst;
 
   alu alu_instance(
     .accum(accum),
@@ -43,6 +44,7 @@ module cpu (
     .result(alu_result),
     .zero(alu_zero),
     .neg(alu_neg),
+    .carry(alu_carry),
     .is_alu_inst(is_alu_inst),
     .inst_add(inst_add),
     .inst_sub(inst_sub),
@@ -192,6 +194,7 @@ module cpu (
       sp <= 0;
       zero <= 0;
       neg <= 0;
+      carry <= 0;
       skip <= 0;
       skipped <= 0;
       data_out <= 0;
@@ -240,7 +243,7 @@ module cpu (
             dp <= accum;
           end
         end else if (inst_status) begin
-          accum <= {2'b0, skipped, 3'b0, neg, zero};
+          accum <= {2'b0, skipped, 2'b0, carry, neg, zero};
           pc <= pc + inst_bytes;
           state <= ST_INIT;
         end else if (inst_drop) begin
@@ -295,6 +298,7 @@ module cpu (
             accum <= alu_result;
             zero <= alu_zero;
             neg <= alu_neg;
+            carry <= alu_carry;
             pc <= pc + inst_bytes;
             state <= ST_INIT;
           end else if (source_ram | source_indirect) begin
@@ -399,6 +403,7 @@ module cpu (
               accum <= alu_result;
               zero <= alu_zero;
               neg <= alu_neg;
+              carry <= alu_carry;
               pc <= pc + inst_bytes;
               state <= ST_INIT;
             end else if (inst_store) begin
@@ -427,6 +432,7 @@ module cpu (
             accum <= alu_result;
             zero <= alu_zero;
             neg <= alu_neg;
+            carry <= alu_carry;
             pc <= pc + inst_bytes;
             state <= ST_INIT;
           end else if (inst_store) begin

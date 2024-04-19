@@ -870,6 +870,131 @@ fn main() {
         Opcode::OutLo,
     ]).unwrap();
 
+    run("op_add_carry.mem", &[
+        // FFFE + 1 => no carry
+        Opcode::LoadImmediateWord(0xFFFE),
+        Opcode::Add(Source::Const(ByteInWord::Lo, 1)),
+        // assert no carry
+        Opcode::Status,
+        Opcode::And(Source::Const(ByteInWord::Lo, 0x04)),
+        Opcode::If(Condition::NotZero),
+        Opcode::Trap,
+        // FFFF + 1 => carry
+        Opcode::LoadImmediateWord(0xFFFF),
+        Opcode::Add(Source::Const(ByteInWord::Lo, 1)),
+        // assert carry
+        Opcode::Status,
+        Opcode::And(Source::Const(ByteInWord::Lo, 0x04)),
+        Opcode::If(Condition::Zero),
+        Opcode::Trap,
+        // 1 + FFFF => carry
+        Opcode::LoadImmediateWord(0xFFFF),
+        Opcode::Store(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, 0xF0)),
+        Opcode::Load(Source::Const(ByteInWord::Lo, 1)),
+        Opcode::Add(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, 0xF0)),
+        // assert carry
+        Opcode::Status,
+        Opcode::And(Source::Const(ByteInWord::Lo, 0x04)),
+        Opcode::If(Condition::Zero),
+        Opcode::Trap,
+        // FFFF + FF00 => carry
+        Opcode::LoadImmediateWord(0xFFFE),
+        Opcode::Add(Source::Const(ByteInWord::Hi, 0xFF)),
+        // assert carry
+        Opcode::Status,
+        Opcode::And(Source::Const(ByteInWord::Lo, 0x04)),
+        Opcode::If(Condition::Zero),
+        Opcode::Trap,
+        // done
+        Opcode::Load(Source::Const(ByteInWord::Lo, 1)),
+        Opcode::OutLo,
+    ]).unwrap();
+
+    run("op_sub_carry.mem", &[
+        // 1 - 1 => no carry
+        Opcode::Load(Source::Const(ByteInWord::Lo, 1)),
+        Opcode::Sub(Source::Const(ByteInWord::Lo, 1)),
+        // assert no carry
+        Opcode::Status,
+        Opcode::And(Source::Const(ByteInWord::Lo, 0x04)),
+        Opcode::If(Condition::NotZero),
+        Opcode::Trap,
+        // 0 - 1 => carry
+        Opcode::Load(Source::Const(ByteInWord::Lo, 0)),
+        Opcode::Sub(Source::Const(ByteInWord::Lo, 1)),
+        // assert carry
+        Opcode::Status,
+        Opcode::And(Source::Const(ByteInWord::Lo, 0x04)),
+        Opcode::If(Condition::Zero),
+        Opcode::Trap,
+        // 7FFF - 8000 => carry
+        Opcode::LoadImmediateWord(0x8000),
+        Opcode::Store(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, 0xF0)),
+        Opcode::LoadImmediateWord(0x7FFF),
+        Opcode::Sub(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, 0xF0)),
+        // assert carry
+        Opcode::Status,
+        Opcode::And(Source::Const(ByteInWord::Lo, 0x04)),
+        Opcode::If(Condition::Zero),
+        Opcode::Trap,
+        // 8000 - 8001 => carry
+        Opcode::LoadImmediateWord(0x8001),
+        Opcode::Store(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, 0xF0)),
+        Opcode::LoadImmediateWord(0x8000),
+        Opcode::Sub(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, 0xF0)),
+        // assert carry
+        Opcode::Status,
+        Opcode::And(Source::Const(ByteInWord::Lo, 0x04)),
+        Opcode::If(Condition::Zero),
+        Opcode::Trap,
+        // done
+        Opcode::Load(Source::Const(ByteInWord::Lo, 1)),
+        Opcode::OutLo,
+    ]).unwrap();
+
+    run("op_not_carry.mem", &[
+        Opcode::Load(Source::Const(ByteInWord::Lo, 0)),
+        Opcode::Not,
+        // assert carry
+        Opcode::Status,
+        Opcode::And(Source::Const(ByteInWord::Lo, 0x04)),
+        Opcode::If(Condition::Zero),
+        Opcode::Trap,
+        // value does not matter
+        Opcode::LoadImmediateWord(0xFFFF),
+        Opcode::Not,
+        // assert carry
+        Opcode::Status,
+        Opcode::And(Source::Const(ByteInWord::Lo, 0x04)),
+        Opcode::If(Condition::Zero),
+        Opcode::Trap,
+        // done
+        Opcode::Load(Source::Const(ByteInWord::Lo, 1)),
+        Opcode::OutLo,
+    ]).unwrap();
+
+    run("op_shift_carry.mem", &[
+        // 1 >> 1 => carry
+        Opcode::Load(Source::Const(ByteInWord::Lo, 1)),
+        Opcode::Shift(Direction::Right, ShiftSource::Const(1)),
+        // assert carry
+        Opcode::Status,
+        Opcode::And(Source::Const(ByteInWord::Lo, 0x04)),
+        Opcode::If(Condition::Zero),
+        Opcode::Trap,
+        // 0x8000 << 1 => carry
+        Opcode::LoadImmediateWord(0x8000),
+        Opcode::Shift(Direction::Left, ShiftSource::Const(1)),
+        // assert carry
+        Opcode::Status,
+        Opcode::And(Source::Const(ByteInWord::Lo, 0x04)),
+        Opcode::If(Condition::Zero),
+        Opcode::Trap,
+        // done
+        Opcode::Load(Source::Const(ByteInWord::Lo, 1)),
+        Opcode::OutLo,
+    ]).unwrap();
+
     fn run(filename: &str, insts: &[Opcode]) -> std::io::Result<()> {
         let encoded = insts.iter().map(|i| i.encode()).collect::<Vec<_>>();
 

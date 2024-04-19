@@ -11,6 +11,7 @@ module alu (
     output wire [15:0] result,
     output wire        zero,
     output wire        neg,
+    output wire        carry,
     output wire        is_alu_inst,
     input  wire        inst_add,
     input  wire        inst_sub,
@@ -35,6 +36,13 @@ module alu (
     : inst_not ? (~accum)
     : inst_shl ? (accum << rhs)
     : inst_shr ? (accum >> rhs)
+    : 0;
+
+  assign carry = inst_add ? ((accum[15] & rhs[15]) | (rhs[15] & ~result[15]) | (~result[15] & accum[15]))
+    : inst_sub ? ((~accum[15] & rhs[15]) | (rhs[15] & result[15]) | (result[15] & ~accum[15]))
+    : inst_not ? 1
+    : inst_shl ? accum[16 - rhs]
+    : inst_shr ? accum[rhs - 1]
     : 0;
 
   assign zero = is_alu_inst & (result == 0);
