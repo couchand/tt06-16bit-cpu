@@ -245,7 +245,7 @@ module cpu (
             dp <= accum;
           end
         end else if (inst_status) begin
-          accum <= {2'b0, skipped, 2'b0, carry, neg, zero};
+          accum <= {8'b0, 2'b0, skipped, 2'b0, carry, neg, zero};
           pc <= pc + inst_bytes;
           state <= ST_INIT;
         end else if (inst_drop) begin
