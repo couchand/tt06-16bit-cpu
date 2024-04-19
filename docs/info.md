@@ -13,14 +13,17 @@ Couch's One-Register Accumulator machine, 16-bit width.
 
 One register should be enough for anybody.  Well, there's also the program counter, status flags, stack pointer, data pointer, but who's counting?
 
-External SPI memory is used for a simple instruction fetch/execute cycle.  High-bandwidth I/O is provided through a full byte width input and output bus.  The machine allows single-stepping through execution to aid debugging.
+External SPI memory is used for a simple instruction fetch/execute cycle.  High-bandwidth I/O is provided through a full byte-width input and output bus.  The machine allows single-stepping through execution to aid debugging.
 
 Pin | Function
 ----+---------
 `step` | Set high for a clock cycle to step, hold high to run.
 `busy` | When high, the machine is currently working on an instruction.
 `halt` | When high, the machine has halted execution.
-`trap` | When `halt` is low and `trap` is high, the machine has trapped.  Step once to attempt recovery (success depends significantly on context).  When both `halt` and `trap` are high, the machine has experienced an irrecoverable fault, please reset.
+`trap` | When `halt` is low and `trap` is high, the machine has trapped.  Step once to attempt recovery (success depends significantly on context).
+       | Note: when both `halt` and `trap` are high, the machine has experienced an irrecoverable fault, please reset.
+`in[7:0]` | General-purpose byte input.  Use as data source `IN` for any one-argument instruction.
+`out[7:0]` | General-purpose byte output.  Set with the `OUT` instruction.
 
 ## How to test
 
@@ -38,8 +41,7 @@ The module expects an SPI RAM attached to the relevant SPI pins.  The onboard Ra
 
 Status byte | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0
 ------------+---+---+---+---+---+---+---+--
-Current     | x | x | *E*lse | x | x | x | *N*eg | *Z*ero
-Future      | *I*nt En | *T*xfr | *E*lse | *S*ign | O*V*erflow | *C*arry | *N*eg | *Z*ero
+            | x | x | **E**lse | x | x | x | **N**eg | **Z**ero
 
 Impact on the status flags is documented as:
 
