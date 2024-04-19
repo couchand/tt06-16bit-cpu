@@ -716,6 +716,42 @@ fn main() {
         Opcode::OutLo,
     ]).unwrap();
 
+    run("op_pop.mem", &[
+        Opcode::Load(Source::Const(ByteInWord::Lo, 5)),
+        Opcode::Push,
+        Opcode::Load(Source::Const(ByteInWord::Lo, 4)),
+        Opcode::Push,
+        Opcode::Load(Source::Const(ByteInWord::Lo, 3)),
+        Opcode::Push,
+        Opcode::Load(Source::Const(ByteInWord::Lo, 2)),
+        Opcode::Push,
+        Opcode::Load(Source::Const(ByteInWord::Lo, 1)),
+        Opcode::Push,
+        Opcode::Load(Source::Const(ByteInWord::Lo, 9)),
+        Opcode::If(Condition::Zero),
+        Opcode::Pop,
+        Opcode::Load(Source::Const(ByteInWord::Lo, 8)),
+        Opcode::If(Condition::Zero),
+        Opcode::Nop,
+        Opcode::If(Condition::NotElse),
+        Opcode::Pop,
+        Opcode::Load(Source::Const(ByteInWord::Lo, 7)),
+        Opcode::If(Condition::NotZero),
+        Opcode::Nop,
+        Opcode::If(Condition::Else),
+        Opcode::Pop,
+        Opcode::Pop,
+        Opcode::OutLo,
+        Opcode::Pop,
+        Opcode::OutLo,
+        Opcode::Pop,
+        Opcode::OutLo,
+        Opcode::Pop,
+        Opcode::OutLo,
+        Opcode::Pop,
+        Opcode::OutLo,
+    ]).unwrap();
+
     fn run(filename: &str, insts: &[Opcode]) -> std::io::Result<()> {
         let encoded = insts.iter().map(|i| i.encode()).collect::<Vec<_>>();
 
