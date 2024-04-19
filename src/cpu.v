@@ -58,7 +58,7 @@ module cpu (
   wire [15:0] rhs;
   wire [1:0] inst_bytes_raw;
   wire [15:0] inst_bytes = {14'b0, inst_bytes_raw};
-  wire inst_load, inst_store, inst_add, inst_sub, inst_test;
+  wire inst_load, inst_store, inst_add, inst_sub, inst_test, inst_status;
   wire inst_and, inst_or, inst_xor, inst_not, inst_shl, inst_shr;
   wire inst_branch, inst_call, inst_if, inst_push, inst_pop, inst_drop, inst_return;
   wire inst_nop, inst_out_lo, inst_out_hi, inst_halt, inst_trap, inst_set_dp;
@@ -99,6 +99,7 @@ module cpu (
     .inst_out_hi(inst_out_hi),
     .inst_set_dp(inst_set_dp),
     .inst_test(inst_test),
+    .inst_status(inst_status),
     .inst_call_word(inst_call_word),
     .inst_load_word(inst_load_word),
     .source_imm(source_imm),
@@ -238,6 +239,10 @@ module cpu (
           if (~skip) begin
             dp <= accum;
           end
+        end else if (inst_status) begin
+          accum <= {2'b0, skipped, 3'b0, neg, zero};
+          pc <= pc + inst_bytes;
+          state <= ST_INIT;
         end else if (inst_drop) begin
           pc <= pc + inst_bytes;
           state <= ST_INIT;

@@ -11,6 +11,7 @@ enum Opcode {
     Return,
     BranchIndirect,
     CallIndirect,
+    Status,
     CallWord(u16),
     LoadImmediateWord(u16),
     Not,
@@ -48,6 +49,7 @@ impl Opcode {
             Opcode::Test => Encoded::U8(0x0B),
             Opcode::BranchIndirect => Encoded::U8(0x0C),
             Opcode::CallIndirect => Encoded::U8(0x0D),
+            Opcode::Status => Encoded::U8(0x10),
             Opcode::CallWord(w) => Encoded::U8U16(0x0E, *w),
             Opcode::LoadImmediateWord(w) => Encoded::U8U16(0x0F, *w),
             //Opcode::LoadIndirect(m) => Encoded::U8(0x44 | m.encode()),
@@ -831,6 +833,41 @@ fn main() {
 
     run("fault.mem", &[
         Opcode::Store(Source::Const(ByteInWord::Lo, 0)),
+    ]).unwrap();
+
+    run("op_status.mem", &[
+        Opcode::Load(Source::Const(ByteInWord::Lo, 0)),
+        Opcode::Test,
+        Opcode::Status,
+        Opcode::Sub(Source::Const(ByteInWord::Lo, 0x01)),
+        Opcode::If(Condition::NotZero),
+        Opcode::Trap,
+        Opcode::Load(Source::Const(ByteInWord::Lo, 1)),
+        Opcode::Test,
+        Opcode::Status,
+        Opcode::Sub(Source::Const(ByteInWord::Lo, 0x00)),
+        Opcode::If(Condition::NotZero),
+        Opcode::Trap,
+        Opcode::LoadImmediateWord(0xFFFF),
+        Opcode::Test,
+        Opcode::Status,
+        Opcode::Sub(Source::Const(ByteInWord::Lo, 0x02)),
+        Opcode::If(Condition::NotZero),
+        Opcode::Trap,
+        Opcode::Status,
+        Opcode::Sub(Source::Const(ByteInWord::Lo, 0x21)),
+        Opcode::If(Condition::NotZero),
+        Opcode::Trap,
+        Opcode::Load(Source::Const(ByteInWord::Lo, 0)),
+        Opcode::Test,
+        Opcode::If(Condition::Zero),
+        Opcode::Nop,
+        Opcode::Status,
+        Opcode::Sub(Source::Const(ByteInWord::Lo, 0x01)),
+        Opcode::If(Condition::NotZero),
+        Opcode::Trap,
+        Opcode::Load(Source::Const(ByteInWord::Lo, 1)),
+        Opcode::OutLo,
     ]).unwrap();
 
     fn run(filename: &str, insts: &[Opcode]) -> std::io::Result<()> {
