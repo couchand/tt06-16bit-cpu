@@ -1,8 +1,12 @@
 ![](../../workflows/gds/badge.svg) ![](../../workflows/docs/badge.svg) ![](../../workflows/test/badge.svg)
 
-# Tiny Tapeout Verilog Project Template
+# CORA-16
+
+Couch's One-Register Accumulator Machine, 16-bit width.
 
 - [Read the documentation for project](docs/info.md)
+
+A project for Tiny Tapeout.
 
 ## What is Tiny Tapeout?
 

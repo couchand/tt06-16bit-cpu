@@ -33,7 +33,7 @@ module tb ();
   assign halt = uio_out[6];
   assign trap = uio_out[7];
 
-  tt_um_couchand_16bit_cpu user_project (
+  tt_um_couchand_cora16 user_project (
 
       // Include power ports for the Gate Level test:
 `ifdef GL_TEST

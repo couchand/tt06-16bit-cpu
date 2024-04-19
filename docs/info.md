@@ -9,7 +9,7 @@ You can also include images in this folder and reference them in the markdown. E
 
 ## How it works
 
-A little 16-bit CPU accumulator machine.
+Couch's One-Register Accumulator machine, 16-bit width.
 
 ## How to test
 
