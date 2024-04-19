@@ -18,6 +18,7 @@ project:
     - "project.v"
     - "cpu.v"
     - "decoder.v"
+    - "alu.v"
     - "spi.v"
 
 # The pinout of your project. Leave unused pins blank. DO NOT delete or add any pins.

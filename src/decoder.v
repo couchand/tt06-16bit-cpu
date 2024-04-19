@@ -102,8 +102,9 @@ module decoder (
 
   wire source_const = !one_arg ? 0 : (inst & 16'h0600) == 16'h0000;
   wire source_data  = !one_arg ? 0 : (inst & 16'h0600) == 16'h0200;
+  wire source_none  = inst_not | inst_test;
 
-  assign source_imm = source_const | source_data;
+  assign source_imm = source_const | source_data | source_none;
   assign source_ram = one_arg ? (inst & 16'h0500) == 16'h0400
     : inst_load_indirect;
   assign source_indirect = one_arg & ((inst & 16'h0500) == 16'h0500);

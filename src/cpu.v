@@ -33,6 +33,28 @@ module cpu (
   reg skip;
   reg skipped;
 
+  wire [15:0] alu_rhs = (state == ST_INST_EXEC0) ? rhs : ram_data_out;
+  wire [15:0] alu_result;
+  wire alu_zero, alu_neg, is_alu_inst;
+
+  alu alu_instance(
+    .accum(accum),
+    .rhs(alu_rhs),
+    .result(alu_result),
+    .zero(alu_zero),
+    .neg(alu_neg),
+    .is_alu_inst(is_alu_inst),
+    .inst_add(inst_add),
+    .inst_sub(inst_sub),
+    .inst_test(inst_test),
+    .inst_and(inst_and),
+    .inst_or(inst_or),
+    .inst_xor(inst_xor),
+    .inst_not(inst_not),
+    .inst_shl(inst_shl),
+    .inst_shr(inst_shr)
+  );
+
   wire [15:0] rhs;
   wire [1:0] inst_bytes_raw;
   wire [15:0] inst_bytes = {14'b0, inst_bytes_raw};
@@ -216,13 +238,6 @@ module cpu (
           if (~skip) begin
             dp <= accum;
           end
-        end else if (inst_test) begin
-          pc <= pc + inst_bytes;
-          state <= ST_INIT;
-          if (~skip) begin
-            zero <= accum == 0;
-            neg <= accum[15];
-          end
         end else if (inst_drop) begin
           pc <= pc + inst_bytes;
           state <= ST_INIT;
@@ -235,14 +250,6 @@ module cpu (
             state <= ST_INIT;
           end else begin
             state <= ST_INST_EXEC1;
-          end
-        end else if (inst_not) begin
-          pc <= pc + inst_bytes;
-          state <= ST_INIT;
-          if (~skip) begin
-            accum <= ~accum;
-            zero <= (~accum) == 0;
-            neg <= (~accum) < 0;
           end
         end else if (inst_call_word | inst_load_word) begin
           if (skip) begin
@@ -261,6 +268,8 @@ module cpu (
             state <= ST_INIT;
           end else if (source_ram | source_indirect) begin
             state <= ST_INST_EXEC1;
+          end else begin
+            state <= ST_FAULT;
           end
         end else if (inst_store) begin
           if (skip) begin
@@ -270,97 +279,23 @@ module cpu (
             state <= ST_FAULT;
           end else if (source_ram | source_indirect) begin
             state <= ST_INST_EXEC1;
+          end else begin
+            state <= ST_FAULT;
           end
-        end else if (inst_add) begin
+        end else if (is_alu_inst) begin
           if (skip) begin
             pc <= pc + inst_bytes;
             state <= ST_INIT;
           end else if (source_imm) begin
-            accum <= accum + rhs;
-            zero <= (accum + rhs) == 0;
-            neg <= (accum + rhs) < 0;
+            accum <= alu_result;
+            zero <= alu_zero;
+            neg <= alu_neg;
             pc <= pc + inst_bytes;
             state <= ST_INIT;
           end else if (source_ram | source_indirect) begin
             state <= ST_INST_EXEC1;
-          end
-        end else if (inst_sub) begin
-          if (skip) begin
-            pc <= pc + inst_bytes;
-            state <= ST_INIT;
-          end else if (source_imm) begin
-            accum <= accum - rhs;
-            zero <= (accum - rhs) == 0;
-            neg <= (accum - rhs) < 0;
-            pc <= pc + inst_bytes;
-            state <= ST_INIT;
-          end else if (source_ram | source_indirect) begin
-            state <= ST_INST_EXEC1;
-          end
-        end else if (inst_and) begin
-          if (skip) begin
-            pc <= pc + inst_bytes;
-            state <= ST_INIT;
-          end else if (source_imm) begin
-            accum <= accum & rhs;
-            zero <= (accum & rhs) == 0;
-            neg <= (accum & rhs) < 0;
-            pc <= pc + inst_bytes;
-            state <= ST_INIT;
-          end else if (source_ram | source_indirect) begin
-            state <= ST_INST_EXEC1;
-          end
-        end else if (inst_or) begin
-          if (skip) begin
-            pc <= pc + inst_bytes;
-            state <= ST_INIT;
-          end else if (source_imm) begin
-            accum <= accum | rhs;
-            zero <= (accum | rhs) == 0;
-            neg <= (accum | rhs) < 0;
-            pc <= pc + inst_bytes;
-            state <= ST_INIT;
-          end else if (source_ram | source_indirect) begin
-            state <= ST_INST_EXEC1;
-          end
-        end else if (inst_xor) begin
-          if (skip) begin
-            pc <= pc + inst_bytes;
-            state <= ST_INIT;
-          end else if (source_imm) begin
-            accum <= accum ^ rhs;
-            zero <= (accum ^ rhs) == 0;
-            neg <= (accum ^ rhs) < 0;
-            pc <= pc + inst_bytes;
-            state <= ST_INIT;
-          end else if (source_ram | source_indirect) begin
-            state <= ST_INST_EXEC1;
-          end
-        end else if (inst_shl) begin
-          if (skip) begin
-            pc <= pc + inst_bytes;
-            state <= ST_INIT;
-          end else if (source_imm) begin
-            accum <= accum << rhs;
-            zero <= (accum << rhs) == 0;
-            neg <= (accum << rhs) < 0;
-            pc <= pc + inst_bytes;
-            state <= ST_INIT;
-          end else if (source_ram | source_indirect) begin
-            state <= ST_INST_EXEC1;
-          end
-        end else if (inst_shr) begin
-          if (skip) begin
-            pc <= pc + inst_bytes;
-            state <= ST_INIT;
-          end else if (source_imm) begin
-            accum <= accum >> rhs;
-            zero <= (accum >> rhs) == 0;
-            neg <= (accum >> rhs) < 0;
-            pc <= pc + inst_bytes;
-            state <= ST_INIT;
-          end else if (source_ram | source_indirect) begin
-            state <= ST_INST_EXEC1;
+          end else begin
+            state <= ST_FAULT;
           end
         end else if (inst_branch) begin
           state <= ST_INIT;
@@ -455,46 +390,10 @@ module cpu (
               accum <= ram_data_out;
               pc <= pc + inst_bytes;
               state <= ST_INIT;
-            end else if (inst_add) begin
-              accum <= accum + ram_data_out;
-              zero <= (accum + ram_data_out) == 0;
-              neg <= (accum + ram_data_out) < 0;
-              pc <= pc + inst_bytes;
-              state <= ST_INIT;
-            end else if (inst_sub) begin
-              accum <= accum - ram_data_out;
-              zero <= (accum - ram_data_out) == 0;
-              neg <= (accum - ram_data_out) < 0;
-              pc <= pc + inst_bytes;
-              state <= ST_INIT;
-            end else if (inst_and) begin
-              accum <= accum & ram_data_out;
-              zero <= (accum & ram_data_out) == 0;
-              neg <= (accum & ram_data_out) < 0;
-              pc <= pc + inst_bytes;
-              state <= ST_INIT;
-            end else if (inst_or) begin
-              accum <= accum | ram_data_out;
-              zero <= (accum | ram_data_out) == 0;
-              neg <= (accum | ram_data_out) < 0;
-              pc <= pc + inst_bytes;
-              state <= ST_INIT;
-            end else if (inst_xor) begin
-              accum <= accum ^ ram_data_out;
-              zero <= (accum ^ ram_data_out) == 0;
-              neg <= (accum ^ ram_data_out) < 0;
-              pc <= pc + inst_bytes;
-              state <= ST_INIT;
-            end else if (inst_shl) begin
-              accum <= accum << ram_data_out;
-              zero <= (accum << ram_data_out) == 0;
-              neg <= (accum << ram_data_out) < 0;
-              pc <= pc + inst_bytes;
-              state <= ST_INIT;
-            end else if (inst_shr) begin
-              accum <= accum >> ram_data_out;
-              zero <= (accum >> ram_data_out) == 0;
-              neg <= (accum >> ram_data_out) < 0;
+            end else if (is_alu_inst) begin
+              accum <= alu_result;
+              zero <= alu_zero;
+              neg <= alu_neg;
               pc <= pc + inst_bytes;
               state <= ST_INIT;
             end else if (inst_store) begin
@@ -519,34 +418,10 @@ module cpu (
             accum <= ram_data_out;
             pc <= pc + inst_bytes;
             state <= ST_INIT;
-          end else if (inst_add) begin
-            accum <= accum + ram_data_out;
-            zero <= (accum + ram_data_out) == 0;
-            neg <= (accum + ram_data_out) < 0;
-            pc <= pc + inst_bytes;
-            state <= ST_INIT;
-          end else if (inst_sub) begin
-            accum <= accum - ram_data_out;
-            zero <= (accum - ram_data_out) == 0;
-            neg <= (accum - ram_data_out) < 0;
-            pc <= pc + inst_bytes;
-            state <= ST_INIT;
-          end else if (inst_and) begin
-            accum <= accum & ram_data_out;
-            zero <= (accum & ram_data_out) == 0;
-            neg <= (accum & ram_data_out) < 0;
-            pc <= pc + inst_bytes;
-            state <= ST_INIT;
-          end else if (inst_or) begin
-            accum <= accum | ram_data_out;
-            zero <= (accum | ram_data_out) == 0;
-            neg <= (accum | ram_data_out) < 0;
-            pc <= pc + inst_bytes;
-            state <= ST_INIT;
-          end else if (inst_xor) begin
-            accum <= accum ^ ram_data_out;
-            zero <= (accum ^ ram_data_out) == 0;
-            neg <= (accum ^ ram_data_out) < 0;
+          end else if (is_alu_inst) begin
+            accum <= alu_result;
+            zero <= alu_zero;
+            neg <= alu_neg;
             pc <= pc + inst_bytes;
             state <= ST_INIT;
           end else if (inst_store) begin
