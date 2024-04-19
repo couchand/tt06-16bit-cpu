@@ -15,6 +15,7 @@ enum Opcode {
     LoadImmediateWord(u16),
     Not,
     SetDataPointer,
+    Test,
     LoadIndirect,// TODO: (AddressingMode),
     Load(Source),
     Store(Source),
@@ -44,6 +45,7 @@ impl Opcode {
             Opcode::OutLo => Encoded::U8(0x08),
             Opcode::OutHi => Encoded::U8(0x09),
             Opcode::SetDataPointer => Encoded::U8(0x0A),
+            Opcode::Test => Encoded::U8(0x0B),
             Opcode::BranchIndirect => Encoded::U8(0x0C),
             Opcode::CallIndirect => Encoded::U8(0x0D),
             Opcode::CallWord(w) => Encoded::U8U16(0x0E, *w),
@@ -785,6 +787,27 @@ fn main() {
         Opcode::Drop,
         Opcode::OutLo,
         Opcode::Pop,
+        Opcode::OutLo,
+    ]).unwrap();
+
+    run("op_test.mem", &[
+        Opcode::Load(Source::Const(ByteInWord::Lo, 0xFF)),
+        Opcode::OutLo,
+        Opcode::LoadImmediateWord(0x0000),
+        Opcode::Test,
+        Opcode::If(Condition::Zero),
+        Opcode::OutLo,
+        Opcode::LoadImmediateWord(0x0001),
+        Opcode::Test,
+        Opcode::If(Condition::Zero),
+        Opcode::OutLo,
+        Opcode::LoadImmediateWord(0x0001),
+        Opcode::Test,
+        Opcode::If(Condition::NotZero),
+        Opcode::OutLo,
+        Opcode::LoadImmediateWord(0x0000),
+        Opcode::Test,
+        Opcode::If(Condition::NotZero),
         Opcode::OutLo,
     ]).unwrap();
 

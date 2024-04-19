@@ -56,6 +56,7 @@ Not  | `0000 0111` | One's complement of the accumulator | `---- --##`
 Out Lo | `0000 1000` | Output the low byte of the accumulator | `---- ----`
 Out Hi | `0000 1001` | Output the high byte of the accumulator | `---- ----`
 Set DP | `0000 1010` | Set the data pointer value to the accumulator value | `---- ----`
+Test | `0000 1011` | Set the status flags based on the accumulator value | `---- --##`
 Branch Indirect | `0000 1100` | Add the accumulator to the program counter | `---- ----`
 Call Indirect | `0000 1101` | Call the subroutine address in the accumulator | `---- ----`
 Load Indirect | `0100 01mm` | Load a word from the address in the accumulator, using addressing mode `m` (bug: modes not supported) | `---- --##` (bug: should not affect flags)
