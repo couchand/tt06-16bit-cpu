@@ -67,8 +67,8 @@ module decoder (
   assign inst_set_dp = en & ((inst >> 8) == 16'h000A);
   assign inst_test = en & ((inst >> 8) == 16'h000B);
   assign inst_status = en & ((inst >> 8) == 16'h0010);
-  assign inst_call_word = en & ((inst >> 8) == 16'h000E);
-  assign inst_load_word = en & ((inst >> 8) == 16'h000F);
+  assign inst_call_word = en & ((inst >> 8) == 16'h003E);
+  assign inst_load_word = en & ((inst >> 8) == 16'h003F);
   wire inst_load_indirect = en & ((inst >> 8) == 16'h0044);
 
   assign bytes = zero_arg ? 1 : 2;

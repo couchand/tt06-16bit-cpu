@@ -124,5 +124,5 @@ Not Neg   | `0101`      | Skip the next instruction if the `N` bit is set
 
 Name | Bit Pattern | Description | Status
 -----+-------------+-------------+-------
-Call Word | `0000 1110 wwww wwww wwww wwww` | Call the subroutine at address `w` | `---- ----`
-Load Immediate Word | `0000 1111 wwww wwww wwww wwww` | Set the accumulator to `w` | `---- ----`
+Call Word | `0011 1110 wwww wwww wwww wwww` | Call the subroutine at address `w` | `---- ----`
+Load Immediate Word | `0011 1111 wwww wwww wwww wwww` | Set the accumulator to `w` | `---- ----`
