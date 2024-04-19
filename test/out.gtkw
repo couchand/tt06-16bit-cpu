@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.104 (w)1999-2020 BSI
-[*] Thu Apr 18 03:00:19 2024
+[*] Fri Apr 19 15:03:47 2024
 [*]
-[dumpfile] "/home/couch/dev/personal/chacha-silicon/tt06-16bit-cpu/test/tb.vcd"
-[dumpfile_mtime] "Thu Apr 18 02:54:47 2024"
-[dumpfile_size] 1172476
-[savefile] "/home/couch/dev/personal/chacha-silicon/tt06-16bit-cpu/test/out.gtkw"
-[timestart] 16295000000
+[dumpfile] "/home/couch/dev/personal/chacha-silicon/tt06-cora16/test/tb.vcd"
+[dumpfile_mtime] "Fri Apr 19 15:03:47 2024"
+[dumpfile_size] 1449984
+[savefile] "/home/couch/dev/personal/chacha-silicon/tt06-cora16/test/out.gtkw"
+[timestart] 131594000000
 [size] 1850 1016
 [pos] -1 -1
-*-28.000000 11400000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-29.000000 132520000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tb.
 [treeopen] user_project.
 [treeopen] user_project.cpu_instance.
@@ -31,7 +31,11 @@ user_project.cpu_instance.data_out[7:0]
 user_project.cpu_instance.accum[15:0]
 user_project.cpu_instance.pc[15:0]
 user_project.cpu_instance.inst_decoder.inst[15:0]
+@29
+user_project.cpu_instance.skip
 @28
+user_project.cpu_instance.zero
+user_project.cpu_instance.neg
 user_project.cpu_instance.inst_decoder.inst_nop
 user_project.cpu_instance.inst_decoder.inst_out_lo
 user_project.cpu_instance.inst_decoder.inst_load
@@ -47,6 +51,8 @@ user_project.cpu_instance.inst_decoder.if_zero
 user_project.cpu_instance.inst_decoder.if_not_zero
 user_project.cpu_instance.inst_decoder.if_else
 user_project.cpu_instance.inst_decoder.if_not_else
+user_project.cpu_instance.if_neg
+user_project.cpu_instance.if_not_neg
 user_project.cpu_instance.ram_busy
 user_project.cpu_instance.ram_start_read
 user_project.cpu_instance.ram_start_write
@@ -54,9 +60,5 @@ user_project.cpu_instance.ram_start_write
 user_project.cpu_instance.ram_addr[15:0]
 user_project.cpu_instance.ram_data_in[15:0]
 user_project.cpu_instance.ram_data_out[15:0]
-@23
-tb.spi_ram.debug_addr[23:0]
-@22
-tb.spi_ram.debug_data[31:0]
 [pattern_trace] 1
 [pattern_trace] 0

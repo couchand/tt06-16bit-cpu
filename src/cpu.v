@@ -181,7 +181,9 @@ module cpu (
           state <= ST_UNTRAP;
         end
       end else if (state == ST_UNTRAP) begin
-        state <= ST_INIT;
+        if (~step) begin
+          state <= ST_INIT;
+        end
       end else if (state == ST_LOAD_INST0) begin
         state <= ST_LOAD_INST1;
       end else if (state == ST_LOAD_INST1) begin
@@ -254,8 +256,6 @@ module cpu (
             state <= ST_INIT;
           end else if (source_imm) begin
             accum <= rhs;
-            zero <= rhs == 0;
-            neg <= rhs < 0;
             pc <= pc + inst_bytes;
             state <= ST_INIT;
           end else if (source_ram | source_indirect) begin
@@ -411,9 +411,9 @@ module cpu (
           end else if (if_not_else) begin
             skip <= skipped;
           end else if (if_neg) begin
-            skip <= neg;
-          end else if (if_not_neg) begin
             skip <= ~neg;
+          end else if (if_not_neg) begin
+            skip <= neg;
           end else begin
             state <= ST_TRAP;
           end
@@ -432,8 +432,6 @@ module cpu (
           end else if (inst_pop) begin
             sp <= sp + 2;
             accum <= ram_data_out;
-            zero <= ram_data_out == 0;
-            neg <= ram_data_out < 0;
             state <= ST_INIT;
             pc <= pc + inst_bytes;
           end else if (inst_call) begin
@@ -449,15 +447,11 @@ module cpu (
             state <= ST_INST_EXEC2;
           end else if (inst_load_word) begin
             accum <= ram_data_out;
-            zero <= ram_data_out == 0;
-            neg <= ram_data_out < 0;
             pc <= pc + inst_bytes + 2;
             state <= ST_INIT;
           end else if (source_ram) begin
             if (inst_load) begin
               accum <= ram_data_out;
-              zero <= ram_data_out == 0;
-              neg <= ram_data_out < 0;
               pc <= pc + inst_bytes;
               state <= ST_INIT;
             end else if (inst_add) begin
@@ -522,8 +516,6 @@ module cpu (
         if (!ram_busy) begin
           if (inst_load) begin
             accum <= ram_data_out;
-            zero <= ram_data_out == 0;
-            neg <= ram_data_out < 0;
             pc <= pc + inst_bytes;
             state <= ST_INIT;
           end else if (inst_add) begin

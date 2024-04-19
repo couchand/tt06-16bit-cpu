@@ -132,7 +132,7 @@ async def test_ops(dut):
   for i in range(1, 10):
     dut.ui_in.value = i
 
-    for step in range(0, 5):
+    for step in range(0, 6):
       dut.uio_in.value = 0x10
       await ClockCycles(dut.clk, 10)
       dut.uio_in.value = 0x00
@@ -497,7 +497,7 @@ async def test_ops(dut):
 
   # If Else
 
-  for step in range(0, 8):
+  for step in range(0, 9):
     dut.uio_in.value = 0x10
     await ClockCycles(dut.clk, 10)
     dut.uio_in.value = 0x00
@@ -541,7 +541,7 @@ async def test_ops(dut):
 
   # Shift
 
-  for step in range(0, 4):
+  for step in range(0, 3):
     dut.uio_in.value = 0x10
     await ClockCycles(dut.clk, 10)
     dut.uio_in.value = 0x00
@@ -789,7 +789,7 @@ async def test_ops(dut):
 
   # Load Immediate Word
 
-  for step in range(0, 5):
+  for step in range(0, 4):
     assert dut.trap.value == 0
     dut.uio_in.value = 0x10
     await ClockCycles(dut.clk, 10)
@@ -839,7 +839,7 @@ async def test_ops(dut):
 
   # If Negative
 
-  for step in range(0, 4):
+  for step in range(0, 6):
     assert dut.trap.value == 0
     dut.uio_in.value = 0x10
     await ClockCycles(dut.clk, 10)
@@ -896,7 +896,7 @@ async def test_op_halt(dut):
   dut.enable_op_halt.value = 1
   await ClockCycles(dut.clk, 10)
 
-  for step in range(0, 14):
+  for step in range(0, 17):
     assert dut.trap.value == 0
     dut.uio_in.value = 0x10
     await ClockCycles(dut.clk, 10)
@@ -963,7 +963,7 @@ async def test_op_trap(dut):
   dut.enable_op_trap.value = 1
   await ClockCycles(dut.clk, 10)
 
-  for step in range(0, 14):
+  for step in range(0, 17):
     assert dut.trap.value == 0
     dut.uio_in.value = 0x10
     await ClockCycles(dut.clk, 10)
@@ -1029,6 +1029,20 @@ async def test_op_trap(dut):
   while dut.busy.value != 0:
     await ClockCycles(dut.clk, 10)
 
+  assert dut.uo_out.value == 0x1
+  assert dut.halt.value == 0
+  assert dut.trap.value == 0
+
+  await ClockCycles(dut.clk, 10)
+
+  dut.uio_in.value = 0x10
+  await ClockCycles(dut.clk, 10)
+  dut.uio_in.value = 0x00
+  await ClockCycles(dut.clk, 10)
+
+  while dut.busy.value != 0:
+    await ClockCycles(dut.clk, 10)
+
   assert dut.uo_out.value == 0x2
   assert dut.halt.value == 0
   assert dut.trap.value == 0
@@ -1058,7 +1072,7 @@ async def test_op_push(dut):
   dut.enable_op_push.value = 1
   await ClockCycles(dut.clk, 10)
 
-  for step in range(0, 21):
+  for step in range(0, 25):
     assert dut.trap.value == 0
     dut.uio_in.value = 0x10
     await ClockCycles(dut.clk, 10)
@@ -1113,7 +1127,7 @@ async def test_op_pop(dut):
   dut.enable_op_pop.value = 1
   await ClockCycles(dut.clk, 10)
 
-  for step in range(0, 25):
+  for step in range(0, 27):
     assert dut.trap.value == 0
     dut.uio_in.value = 0x10
     await ClockCycles(dut.clk, 10)
@@ -1169,7 +1183,7 @@ async def test_op_drop(dut):
   dut.enable_op_drop.value = 1
   await ClockCycles(dut.clk, 10)
 
-  for step in range(0, 25):
+  for step in range(0, 28):
     assert dut.trap.value == 0
     dut.uio_in.value = 0x10
     await ClockCycles(dut.clk, 10)

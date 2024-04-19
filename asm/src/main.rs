@@ -259,15 +259,15 @@ fn main() {
         Opcode::OutLo,
         Opcode::Nop,
         Opcode::Load(Source::Data(ByteInWord::Lo)),
+        Opcode::Test,
         Opcode::If(Condition::NotZero),
-        Opcode::Branch(Target::I11(0x07F8)),
+        Opcode::Branch(Target::I11(0x07F7)),
         Opcode::Load(Source::Const(ByteInWord::Lo, 0x09)),
         Opcode::Store(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, 0x20)),
         Opcode::Load(Source::Const(ByteInWord::Lo, 0x33)),
         Opcode::Load(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, 0x20)),
         Opcode::Add(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, 0x22)),
         Opcode::OutLo,
-        Opcode::Nop,
         Opcode::Nop,
         Opcode::Nop,
         Opcode::Nop,
@@ -345,22 +345,20 @@ fn main() {
         Opcode::Nop,
         Opcode::Trap,
         Opcode::Nop,
-        Opcode::Nop,
-        Opcode::Nop,
         Opcode::Load(Source::Const(ByteInWord::Lo, 0)),
+        Opcode::Test,
         Opcode::If(Condition::NotZero),
         Opcode::Load(Source::Const(ByteInWord::Lo, 0xBD)),
         Opcode::If(Condition::Else),
         Opcode::Load(Source::Const(ByteInWord::Lo, 0xA4)),
         Opcode::OutLo,
-        Opcode::Nop,
         Opcode::Load(Source::Const(ByteInWord::Lo, 0)),
+        Opcode::Test,
         Opcode::If(Condition::Zero),
         Opcode::Load(Source::Const(ByteInWord::Lo, 0xBD)),
         Opcode::If(Condition::NotElse),
         Opcode::Load(Source::Const(ByteInWord::Lo, 0xA5)),
         Opcode::OutLo,
-        Opcode::Nop,
         Opcode::Load(Source::Const(ByteInWord::Lo, 2)),
         Opcode::Store(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, 0x1E)),
         Opcode::Load(Source::Const(ByteInWord::Lo, 1)),
@@ -407,10 +405,12 @@ fn main() {
         Opcode::CallWord(0x0098),
         Opcode::OutLo,
         Opcode::LoadImmediateWord(0xFFFF),
+        Opcode::Test,
         Opcode::If(Condition::Negative),
         Opcode::Load(Source::Const(ByteInWord::Lo, 0x72)),
         Opcode::OutLo,
         Opcode::LoadImmediateWord(0xFFFF),
+        Opcode::Test,
         Opcode::If(Condition::NotNegative),
         Opcode::Load(Source::Const(ByteInWord::Lo, 0x72)),
         Opcode::OutLo,
@@ -421,12 +421,12 @@ fn main() {
     let cursor = 0x54;
     let cache = 0x58;
 
-    let br0 = 0x12;
-    let br1 = 0x18;
-    let loop_label = 0x1C;
-    let br2 = 0x3C;
-    let br3 = 0x44;
-    let done = 0x44;
+    let br0 = 0x13;
+    let br1 = 0x19;
+    let loop_label = 0x1D;
+    let br2 = 0x3D;
+    let br3 = 0x45;
+    let done = 0x45;
 
     let fib_memo_insts = [
         Opcode::Load(Source::Data(ByteInWord::Lo)),
@@ -436,6 +436,7 @@ fn main() {
         Opcode::Load(Source::Const(ByteInWord::Lo, 1)),
         Opcode::Store(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, cache + 2)),
         Opcode::Load(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, target)),
+        Opcode::Test,
         Opcode::If(Condition::Zero),
         Opcode::Branch(Target::I11(done - br0)),
         Opcode::Sub(Source::Const(ByteInWord::Lo, 1)),
@@ -517,12 +518,12 @@ fn main() {
     let pointer = 0x06;
     let cache = 0x08;
 
-    let br0 = 0x16;
-    let br1 = 0x1C;
-    let loop_label = 0x20;
-    let br2 = 0x46;
-    let br3 = 0x4E;
-    let done = 0x4E;
+    let br0 = 0x17;
+    let br1 = 0x1D;
+    let loop_label = 0x21;
+    let br2 = 0x47;
+    let br3 = 0x4F;
+    let done = 0x4F;
 
     let fib_framed_insts = [
         Opcode::Load(Source::Data(ByteInWord::Lo)),
@@ -535,6 +536,7 @@ fn main() {
         Opcode::Load(Source::Const(ByteInWord::Lo, 1)),
         Opcode::Store(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, cache + 2)),
         Opcode::Load(Source::Ram(RelativeTo::DataPointer, AddressingMode::Direct, target)),
+        Opcode::Test,
         Opcode::If(Condition::Zero),
         Opcode::Branch(Target::I11(done - br0)),
         Opcode::Sub(Source::Const(ByteInWord::Lo, 1)),
@@ -611,9 +613,9 @@ fn main() {
     ];
 
     let fib_fn = 8;
-    let br1 = 14;
-    let br2 = 20;
-    let just_one = 37;
+    let br1 = 15;
+    let br2 = 21;
+    let just_one = 38;
 
     let fib_recursive_insts = [
         Opcode::Load(Source::Data(ByteInWord::Lo)),
@@ -624,6 +626,7 @@ fn main() {
         Opcode::Halt,
         // fib_fn
         Opcode::Load(Source::Ram(RelativeTo::StackPointer, AddressingMode::Direct, 2)),
+        Opcode::Test,
         Opcode::If(Condition::Zero),
         Opcode::Branch(Target::U11(just_one - br1)),
         Opcode::Sub(Source::Const(ByteInWord::Lo, 1)),
@@ -654,14 +657,17 @@ fn main() {
 
     run("op_halt.mem", &[
         Opcode::Load(Source::Const(ByteInWord::Lo, 0)),
+        Opcode::Test,
         Opcode::If(Condition::NotZero),
         Opcode::Halt,
         Opcode::Load(Source::Const(ByteInWord::Lo, 0)),
+        Opcode::Test,
         Opcode::If(Condition::NotZero),
         Opcode::Nop,
         Opcode::If(Condition::NotElse),
         Opcode::Halt,
         Opcode::Load(Source::Const(ByteInWord::Lo, 0)),
+        Opcode::Test,
         Opcode::If(Condition::Zero),
         Opcode::Nop,
         Opcode::If(Condition::Else),
@@ -673,14 +679,17 @@ fn main() {
 
     run("op_trap.mem", &[
         Opcode::Load(Source::Const(ByteInWord::Lo, 0)),
+        Opcode::Test,
         Opcode::If(Condition::NotZero),
         Opcode::Trap,
         Opcode::Load(Source::Const(ByteInWord::Lo, 0)),
+        Opcode::Test,
         Opcode::If(Condition::NotZero),
         Opcode::Nop,
         Opcode::If(Condition::NotElse),
         Opcode::Trap,
         Opcode::Load(Source::Const(ByteInWord::Lo, 0)),
+        Opcode::Test,
         Opcode::If(Condition::Zero),
         Opcode::Nop,
         Opcode::If(Condition::Else),
@@ -696,19 +705,23 @@ fn main() {
         Opcode::Load(Source::Const(ByteInWord::Lo, 0x42)),
         Opcode::Push,
         Opcode::Load(Source::Const(ByteInWord::Lo, 1)),
+        Opcode::Test,
         Opcode::If(Condition::Zero),
         Opcode::Push,
         Opcode::Load(Source::Const(ByteInWord::Lo, 2)),
+        Opcode::Test,
         Opcode::If(Condition::Zero),
         Opcode::Nop,
         Opcode::If(Condition::NotElse),
         Opcode::Push,
         Opcode::Load(Source::Const(ByteInWord::Lo, 3)),
+        Opcode::Test,
         Opcode::If(Condition::NotZero),
         Opcode::Nop,
         Opcode::If(Condition::Else),
         Opcode::Push,
         Opcode::Load(Source::Const(ByteInWord::Lo, 4)),
+        Opcode::Test,
         Opcode::If(Condition::NotZero),
         Opcode::Push,
         Opcode::Load(Source::Const(ByteInWord::Lo, 0)),
@@ -733,11 +746,13 @@ fn main() {
         Opcode::If(Condition::Zero),
         Opcode::Pop,
         Opcode::Load(Source::Const(ByteInWord::Lo, 8)),
+        Opcode::Test,
         Opcode::If(Condition::Zero),
         Opcode::Nop,
         Opcode::If(Condition::NotElse),
         Opcode::Pop,
         Opcode::Load(Source::Const(ByteInWord::Lo, 7)),
+        Opcode::Test,
         Opcode::If(Condition::NotZero),
         Opcode::Nop,
         Opcode::If(Condition::Else),
@@ -766,14 +781,17 @@ fn main() {
         Opcode::Load(Source::Const(ByteInWord::Lo, 1)),
         Opcode::Push,
         Opcode::Load(Source::Const(ByteInWord::Lo, 9)),
+        Opcode::Test,
         Opcode::If(Condition::Zero),
         Opcode::Drop,
         Opcode::Load(Source::Const(ByteInWord::Lo, 8)),
+        Opcode::Test,
         Opcode::If(Condition::Zero),
         Opcode::Nop,
         Opcode::If(Condition::NotElse),
         Opcode::Drop,
         Opcode::Load(Source::Const(ByteInWord::Lo, 7)),
+        Opcode::Test,
         Opcode::If(Condition::NotZero),
         Opcode::Nop,
         Opcode::If(Condition::Else),

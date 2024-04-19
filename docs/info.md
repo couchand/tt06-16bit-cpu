@@ -59,14 +59,14 @@ Set DP | `0000 1010` | Set the data pointer value to the accumulator value | `--
 Test | `0000 1011` | Set the status flags based on the accumulator value | `---- --##`
 Branch Indirect | `0000 1100` | Add the accumulator to the program counter | `---- ----`
 Call Indirect | `0000 1101` | Call the subroutine address in the accumulator | `---- ----`
-Load Indirect | `0100 01mm` | Load a word from the address in the accumulator, using addressing mode `m` (bug: modes not supported) | `---- --##` (bug: should not affect flags)
+Load Indirect | `0100 01mm` | Load a word from the address in the accumulator, using addressing mode `m` (bug: modes not supported) | `---- ----`
 
 
 ### Two-byte instructions
 
 Name | Bit Pattern | Description | Status
 -----+-------------+-------------+-------
-Load | `1000 0sss vvvv vvvv` | Load a value into the accumulator | `---- --##` (bug: should not affect flags)
+Load | `1000 0sss vvvv vvvv` | Load a value into the accumulator | `---- ----`
 Store | `1001 0sss vvvv vvvv` | Store a value to memory | `---- ----`
 Add | `1000 1sss vvvv vvvv` | Add a value to the accumulator | `---- --##`
 Sub | `1001 1sss vvvv vvvv` | Subtract a value from the accumulator | `---- --##`
@@ -115,4 +115,4 @@ Not Neg   | `0101`      | Skip the next instruction if the `N` bit is set
 Name | Bit Pattern | Description | Status
 -----+-------------+-------------+-------
 Call Word | `0000 1110 wwww wwww wwww wwww` | Call the subroutine at address `w` | `---- ----`
-Load Immediate Word | `0000 1111 wwww wwww wwww wwww` | Set the accumulator to `w` | `---- --##` (bug: should not affect flags)
+Load Immediate Word | `0000 1111 wwww wwww wwww wwww` | Set the accumulator to `w` | `---- ----`
