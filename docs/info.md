@@ -119,6 +119,8 @@ Else      | `0010`      | Skip the next instruction if the `E` bit is cleared
 Not Else  | `0011`      | Skip the next instruction if the `E` bit is set
 Neg       | `0100`      | Skip the next instruction if the `N` bit is cleared
 Not Neg   | `0101`      | Skip the next instruction if the `N` bit is set
+Carry     | `0110`      | Skip the next instruction if the `C` bit is cleared
+Not Carry | `0111`      | Skip the next instruction if the `C` bit is set
 
 ### Three-byte instructions
 

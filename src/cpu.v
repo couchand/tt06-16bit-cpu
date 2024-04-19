@@ -67,7 +67,7 @@ module cpu (
   wire inst_call_word, inst_load_word;
   wire source_imm, source_ram, source_indirect;
   wire relative_stack, relative_data;
-  wire if_zero, if_not_zero, if_else, if_not_else, if_neg, if_not_neg;
+  wire if_zero, if_not_zero, if_else, if_not_else, if_neg, if_not_neg, if_carry, if_not_carry;
   wire decoding = (state == ST_INST_EXEC0) | (state == ST_INST_EXEC1)
     | (state == ST_INST_EXEC2) | (state == ST_INST_EXEC3);
   decoder inst_decoder(
@@ -114,7 +114,9 @@ module cpu (
     .if_else(if_else),
     .if_not_else(if_not_else),
     .if_neg(if_neg),
-    .if_not_neg(if_not_neg)
+    .if_not_neg(if_not_neg),
+    .if_carry(if_carry),
+    .if_not_carry(if_not_carry)
   );
 
   reg [8:0] state;
@@ -359,6 +361,10 @@ module cpu (
             skip <= ~neg;
           end else if (if_not_neg) begin
             skip <= neg;
+          end else if (if_carry) begin
+            skip <= ~carry;
+          end else if (if_not_carry) begin
+            skip <= carry;
           end else begin
             state <= ST_FAULT;
           end

@@ -49,7 +49,9 @@ module decoder (
     output wire        if_else,
     output wire        if_not_else,
     output wire        if_neg,
-    output wire        if_not_neg
+    output wire        if_not_neg,
+    output wire        if_carry,
+    output wire        if_not_carry
 );
 
   wire zero_arg = en & ((inst & 16'h8000) == 16'h0000);
@@ -143,5 +145,9 @@ module decoder (
     : (inst & 16'h07FF) == 16'h0004;
   assign if_not_neg = !inst_if ? 0
     : (inst & 16'h07FF) == 16'h0005;
+  assign if_carry = !inst_if ? 0
+    : (inst & 16'h07FF) == 16'h0006;
+  assign if_not_carry = !inst_if ? 0
+    : (inst & 16'h07FF) == 16'h0007;
 
 endmodule

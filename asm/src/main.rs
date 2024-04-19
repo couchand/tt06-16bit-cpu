@@ -209,6 +209,8 @@ impl Condition {
             Condition::NotElse     => 0x0003,
             Condition::Negative    => 0x0004,
             Condition::NotNegative => 0x0005,
+            Condition::Carry       => 0x0006,
+            Condition::NotCarry    => 0x0007,
         };
         Encoded::U16(res)
     }
