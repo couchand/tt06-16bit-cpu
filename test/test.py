@@ -8,6 +8,7 @@ from cocotb.triggers import ClockCycles
 @cocotb.test()
 async def test_ops(dut):
   dut.enable_ops.value = 1
+  dut.enable_op_halt.value = 0
   dut.enable_fib_memo.value = 0
   dut.enable_fib_framed.value = 0
   dut.enable_fib_recursive.value = 0
@@ -878,8 +879,81 @@ async def test_ops(dut):
   await ClockCycles(dut.clk, 10)
 
 @cocotb.test()
+async def test_op_halt(dut):
+  dut.enable_ops.value = 0
+  dut.enable_op_halt.value = 1
+  dut.enable_fib_memo.value = 0
+  dut.enable_fib_framed.value = 0
+  dut.enable_fib_recursive.value = 0
+
+  dut._log.info("Start")
+
+  clock = Clock(dut.clk, 10, units="us")
+  cocotb.start_soon(clock.start())
+
+  debug_clock = Clock(dut.debug_clk, 10, units="us")
+  cocotb.start_soon(debug_clock.start())
+
+  # Reset
+  dut._log.info("Reset")
+  dut.ena.value = 1
+  dut.ui_in.value = 0
+  dut.uio_in.value = 0
+  dut.rst_n.value = 0
+  dut.debug_clk.value = 0
+  dut.debug_addr.value = 0
+  await ClockCycles(dut.clk, 10)
+  dut.rst_n.value = 1
+  await ClockCycles(dut.clk, 10)
+
+  for step in range(0, 14):
+    assert dut.trap.value == 0
+    dut.uio_in.value = 0x10
+    await ClockCycles(dut.clk, 10)
+    dut.uio_in.value = 0x00
+    await ClockCycles(dut.clk, 10)
+
+    while dut.busy.value != 0:
+      await ClockCycles(dut.clk, 10)
+
+  assert dut.uo_out.value == 0x0
+  assert dut.halt.value == 0
+  assert dut.trap.value == 0
+
+  await ClockCycles(dut.clk, 10)
+
+  dut.uio_in.value = 0x10
+  await ClockCycles(dut.clk, 10)
+  dut.uio_in.value = 0x00
+  await ClockCycles(dut.clk, 10)
+
+  while dut.busy.value != 0:
+    await ClockCycles(dut.clk, 10)
+
+  assert dut.uo_out.value == 0x1
+  assert dut.halt.value == 0
+  assert dut.trap.value == 0
+
+  await ClockCycles(dut.clk, 10)
+
+  dut.uio_in.value = 0x10
+  await ClockCycles(dut.clk, 10)
+  dut.uio_in.value = 0x00
+  await ClockCycles(dut.clk, 10)
+
+  while dut.busy.value != 0:
+    await ClockCycles(dut.clk, 10)
+
+  assert dut.uo_out.value == 0x1
+  assert dut.halt.value == 1
+  assert dut.trap.value == 0
+
+  await ClockCycles(dut.clk, 10)
+
+@cocotb.test()
 async def test_fib_memo(dut):
   dut.enable_ops.value = 0
+  dut.enable_op_halt.value = 0
   dut.enable_fib_memo.value = 1
   dut.enable_fib_framed.value = 0
   dut.enable_fib_recursive.value = 0
@@ -930,6 +1004,7 @@ async def test_fib_memo(dut):
 @cocotb.test()
 async def test_fib_framed(dut):
   dut.enable_ops.value = 0
+  dut.enable_op_halt.value = 0
   dut.enable_fib_memo.value = 0
   dut.enable_fib_framed.value = 1
   dut.enable_fib_recursive.value = 0
@@ -980,6 +1055,7 @@ async def test_fib_framed(dut):
 @cocotb.test()
 async def test_fib_recursive(dut):
   dut.enable_ops.value = 0
+  dut.enable_op_halt.value = 0
   dut.enable_fib_memo.value = 0
   dut.enable_fib_framed.value = 0
   dut.enable_fib_recursive.value = 1

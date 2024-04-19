@@ -650,6 +650,25 @@ fn main() {
     run("fib_framed.mem", &fib_framed_insts).unwrap();
     run("fib_recursive.mem", &fib_recursive_insts).unwrap();
 
+    run("op_halt.mem", &[
+        Opcode::Load(Source::Const(ByteInWord::Lo, 0)),
+        Opcode::If(Condition::NotZero),
+        Opcode::Halt,
+        Opcode::Load(Source::Const(ByteInWord::Lo, 0)),
+        Opcode::If(Condition::NotZero),
+        Opcode::Nop,
+        Opcode::If(Condition::NotElse),
+        Opcode::Halt,
+        Opcode::Load(Source::Const(ByteInWord::Lo, 0)),
+        Opcode::If(Condition::Zero),
+        Opcode::Nop,
+        Opcode::If(Condition::Else),
+        Opcode::Halt,
+        Opcode::Load(Source::Const(ByteInWord::Lo, 1)),
+        Opcode::OutLo,
+        Opcode::Halt,
+    ]).unwrap();
+
     fn run(filename: &str, insts: &[Opcode]) -> std::io::Result<()> {
         let encoded = insts.iter().map(|i| i.encode()).collect::<Vec<_>>();
 
