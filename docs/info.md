@@ -21,7 +21,7 @@ Pin | Function
 `busy` | When high, the machine is currently working on an instruction.
 `halt` | When high, the machine has halted execution.
 `trap` | When `halt` is low and `trap` is high, the machine has trapped.  Step once to attempt recovery (success depends significantly on context).
-       | Note: when both `halt` and `trap` are high, the machine has experienced an irrecoverable fault, please reset.
+ .     | Note: when both `halt` and `trap` are high, the machine has experienced an irrecoverable fault, please reset.
 `in[7:0]` | General-purpose byte input.  Use as data source `IN` for any one-argument instruction.
 `out[7:0]` | General-purpose byte output.  Set with the `OUT` instruction.
 
@@ -41,7 +41,7 @@ The module expects an SPI RAM attached to the relevant SPI pins.  The onboard Ra
 
 Status byte | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0
 ------------+---+---+---+---+---+---+---+--
-            | x | x | **E**lse | x | x | **C**arry | **N**eg | **Z**ero
+ .          | x | x | **E**lse | x | x | **C**arry | **N**eg | **Z**ero
 
 Impact on the status flags is documented as:
 
