@@ -104,10 +104,11 @@ module cpu (
   localparam ST_INST_EXEC2 = 7;
   localparam ST_INST_EXEC3 = 8;
   localparam ST_UNTRAP = 9;
+  localparam ST_FAULT = 10;
 
-  assign busy = state != ST_INIT & state != ST_HALT & state != ST_TRAP;
-  assign halt = state == ST_HALT;
-  assign trap = state == ST_TRAP;
+  assign busy = state != ST_INIT & state != ST_HALT & state != ST_TRAP & state != ST_FAULT;
+  assign halt = (state == ST_HALT) | (state == ST_FAULT);
+  assign trap = (state == ST_TRAP) | (state == ST_FAULT);
 
   wire [15:0] sp_minus_two = sp - 2;
 
@@ -266,7 +267,7 @@ module cpu (
             pc <= pc + inst_bytes;
             state <= ST_INIT;
           end else if (source_imm) begin
-            state <= ST_TRAP;
+            state <= ST_FAULT;
           end else if (source_ram | source_indirect) begin
             state <= ST_INST_EXEC1;
           end
@@ -398,7 +399,7 @@ module cpu (
             data_out <= accum[15:8];
           end
         end else begin
-          state <= ST_TRAP;
+          state <= ST_FAULT;
         end
 
         if (inst_if) begin
@@ -415,7 +416,7 @@ module cpu (
           end else if (if_not_neg) begin
             skip <= neg;
           end else begin
-            state <= ST_TRAP;
+            state <= ST_FAULT;
           end
         end else begin
           skip <= 0;
@@ -500,14 +501,14 @@ module cpu (
               pc <= pc + inst_bytes;
               state <= ST_INIT;
             end else begin
-              state <= ST_TRAP;
+              state <= ST_FAULT;
             end
           end else if (source_indirect) begin
             if (!ram_busy) begin
               state <= ST_INST_EXEC2;
             end
           end else begin
-            state <= ST_TRAP;
+            state <= ST_FAULT;
           end
         end
       end else if (state == ST_INST_EXEC2) begin
@@ -555,11 +556,11 @@ module cpu (
             pc <= ram_data_out;
             state <= ST_INIT;
           end else begin
-            state <= ST_TRAP;
+            state <= ST_FAULT;
           end
         end
       end else begin
-        state <= ST_TRAP;
+        state <= ST_FAULT;
       end
     end
   end

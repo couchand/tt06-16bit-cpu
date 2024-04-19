@@ -15,6 +15,13 @@ One register should be enough for anybody.  Well, there's also the program count
 
 External SPI memory is used for a simple instruction fetch/execute cycle.  High-bandwidth I/O is provided through a full byte width input and output bus.  The machine allows single-stepping through execution to aid debugging.
 
+Pin | Function
+----+---------
+`step` | Set high for a clock cycle to step, hold high to run.
+`busy` | When high, the machine is currently working on an instruction.
+`halt` | When high, the machine has halted execution.
+`trap` | When `halt` is low and `trap` is high, the machine has trapped.  Step once to attempt recovery (success depends significantly on context).  When both `halt` and `trap` are high, the machine has experienced an irrecoverable fault, please reset.
+
 ## How to test
 
 1. Load the program to run into the external SPI RAM.

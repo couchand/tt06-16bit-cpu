@@ -829,6 +829,10 @@ fn main() {
         Opcode::OutLo,
     ]).unwrap();
 
+    run("fault.mem", &[
+        Opcode::Store(Source::Const(ByteInWord::Lo, 0)),
+    ]).unwrap();
+
     fn run(filename: &str, insts: &[Opcode]) -> std::io::Result<()> {
         let encoded = insts.iter().map(|i| i.encode()).collect::<Vec<_>>();
 
