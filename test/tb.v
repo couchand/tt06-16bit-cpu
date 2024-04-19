@@ -51,7 +51,7 @@ module tb ();
       .rst_n  (rst_n)     // not reset
   );
 
-  reg enable_ops, enable_op_halt, enable_op_trap, enable_op_push, enable_op_pop;
+  reg enable_ops, enable_op_halt, enable_op_trap, enable_op_push, enable_op_pop, enable_op_drop;
   reg enable_fib_memo, enable_fib_framed, enable_fib_recursive;
 
   wire spi_select_ops = spi_select & enable_ops;
@@ -59,6 +59,7 @@ module tb ();
   wire spi_select_op_trap = spi_select & enable_op_trap;
   wire spi_select_op_push = spi_select & enable_op_push;
   wire spi_select_op_pop = spi_select & enable_op_pop;
+  wire spi_select_op_drop = spi_select & enable_op_drop;
   wire spi_select_fib_memo = spi_select & enable_fib_memo;
   wire spi_select_fib_framed = spi_select & enable_fib_framed;
   wire spi_select_fib_recursive = spi_select & enable_fib_recursive;
@@ -68,6 +69,7 @@ module tb ();
     : enable_op_trap ? spi_miso_op_trap
     : enable_op_push ? spi_miso_op_push
     : enable_op_pop ? spi_miso_op_pop
+    : enable_op_drop ? spi_miso_op_drop
     : enable_fib_memo ? spi_miso_fib_memo
     : enable_fib_framed ? spi_miso_fib_framed
     : enable_fib_recursive ? spi_miso_fib_recursive
@@ -146,6 +148,20 @@ module tb ();
     .debug_data(debug_data_op_pop)
   );
 
+  wire [31:0] debug_data_op_drop;
+  wire spi_miso_op_drop;
+  sim_spi_ram #(
+    .INIT_FILE("mem/op_drop.mem")
+  ) spi_ram_op_drop (
+    .spi_clk(spi_clk),
+    .spi_mosi(spi_mosi),
+    .spi_select(spi_select_op_drop),
+    .spi_miso(spi_miso_op_drop),
+    .debug_clk(debug_clk),
+    .debug_addr(debug_addr),
+    .debug_data(debug_data_op_drop)
+  );
+
   wire [31:0] debug_data_fib_memo;
   wire spi_miso_fib_memo;
   sim_spi_ram #(
@@ -195,6 +211,7 @@ module tb ();
       enable_op_trap <= 0;
       enable_op_push <= 0;
       enable_op_pop <= 0;
+      enable_op_drop <= 0;
       enable_fib_memo <= 0;
       enable_fib_framed <= 0;
       enable_fib_recursive <= 0;

@@ -213,9 +213,11 @@ module cpu (
             dp <= accum;
           end
         end else if (inst_drop) begin
-          sp <= sp + 2;
           pc <= pc + inst_bytes;
           state <= ST_INIT;
+          if (~skip) begin
+            sp <= sp + 2;
+          end
         end else if (inst_push | inst_pop) begin
           if (skip) begin
             pc <= pc + inst_bytes;
