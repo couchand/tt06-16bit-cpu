@@ -690,6 +690,32 @@ fn main() {
         Opcode::OutLo,
     ]).unwrap();
 
+    run("op_push.mem", &[
+        Opcode::Load(Source::Const(ByteInWord::Lo, 0x42)),
+        Opcode::Push,
+        Opcode::Load(Source::Const(ByteInWord::Lo, 1)),
+        Opcode::If(Condition::Zero),
+        Opcode::Push,
+        Opcode::Load(Source::Const(ByteInWord::Lo, 2)),
+        Opcode::If(Condition::Zero),
+        Opcode::Nop,
+        Opcode::If(Condition::NotElse),
+        Opcode::Push,
+        Opcode::Load(Source::Const(ByteInWord::Lo, 3)),
+        Opcode::If(Condition::NotZero),
+        Opcode::Nop,
+        Opcode::If(Condition::Else),
+        Opcode::Push,
+        Opcode::Load(Source::Const(ByteInWord::Lo, 4)),
+        Opcode::If(Condition::NotZero),
+        Opcode::Push,
+        Opcode::Load(Source::Const(ByteInWord::Lo, 0)),
+        Opcode::Pop,
+        Opcode::OutLo,
+        Opcode::Pop,
+        Opcode::OutLo,
+    ]).unwrap();
+
     fn run(filename: &str, insts: &[Opcode]) -> std::io::Result<()> {
         let encoded = insts.iter().map(|i| i.encode()).collect::<Vec<_>>();
 

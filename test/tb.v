@@ -51,12 +51,13 @@ module tb ();
       .rst_n  (rst_n)     // not reset
   );
 
-  reg enable_ops, enable_op_halt, enable_op_trap;
+  reg enable_ops, enable_op_halt, enable_op_trap, enable_op_push;
   reg enable_fib_memo, enable_fib_framed, enable_fib_recursive;
 
   wire spi_select_ops = spi_select & enable_ops;
   wire spi_select_op_halt = spi_select & enable_op_halt;
   wire spi_select_op_trap = spi_select & enable_op_trap;
+  wire spi_select_op_push = spi_select & enable_op_push;
   wire spi_select_fib_memo = spi_select & enable_fib_memo;
   wire spi_select_fib_framed = spi_select & enable_fib_framed;
   wire spi_select_fib_recursive = spi_select & enable_fib_recursive;
@@ -64,6 +65,7 @@ module tb ();
   assign spi_miso = enable_ops ? spi_miso_ops
     : enable_op_halt ? spi_miso_op_halt
     : enable_op_trap ? spi_miso_op_trap
+    : enable_op_push ? spi_miso_op_push
     : enable_fib_memo ? spi_miso_fib_memo
     : enable_fib_framed ? spi_miso_fib_framed
     : enable_fib_recursive ? spi_miso_fib_recursive
@@ -114,6 +116,20 @@ module tb ();
     .debug_data(debug_data_op_trap)
   );
 
+  wire [31:0] debug_data_op_push;
+  wire spi_miso_op_push;
+  sim_spi_ram #(
+    .INIT_FILE("mem/op_push.mem")
+  ) spi_ram_op_push (
+    .spi_clk(spi_clk),
+    .spi_mosi(spi_mosi),
+    .spi_select(spi_select_op_push),
+    .spi_miso(spi_miso_op_push),
+    .debug_clk(debug_clk),
+    .debug_addr(debug_addr),
+    .debug_data(debug_data_op_push)
+  );
+
   wire [31:0] debug_data_fib_memo;
   wire spi_miso_fib_memo;
   sim_spi_ram #(
@@ -161,6 +177,7 @@ module tb ();
       enable_ops <= 0;
       enable_op_halt <= 0;
       enable_op_trap <= 0;
+      enable_op_push <= 0;
       enable_fib_memo <= 0;
       enable_fib_framed <= 0;
       enable_fib_recursive <= 0;
