@@ -645,10 +645,10 @@ fn main() {
         Opcode::Nop,
     ];
 
-    run("../test/ops.mem", &ops_insts).unwrap();
-    run("../test/fib_memo.mem", &fib_memo_insts).unwrap();
-    run("../test/fib_framed.mem", &fib_framed_insts).unwrap();
-    run("../test/fib_recursive.mem", &fib_recursive_insts).unwrap();
+    run("ops.mem", &ops_insts).unwrap();
+    run("fib_memo.mem", &fib_memo_insts).unwrap();
+    run("fib_framed.mem", &fib_framed_insts).unwrap();
+    run("fib_recursive.mem", &fib_recursive_insts).unwrap();
 
     fn run(filename: &str, insts: &[Opcode]) -> std::io::Result<()> {
         let encoded = insts.iter().map(|i| i.encode()).collect::<Vec<_>>();
@@ -678,7 +678,7 @@ fn main() {
         };
 
         use std::io::Write;
-        let mut f = std::fs::File::create(filename)?;
+        let mut f = std::fs::File::create(format!("../test/mem/{filename}"))?;
 
         for g in bytes.chunks(4) {
             writeln!(f, "{:02X}{:02X}{:02X}{:02X}", g[3], g[2], g[1], g[0])?;

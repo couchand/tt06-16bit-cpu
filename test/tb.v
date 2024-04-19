@@ -70,7 +70,7 @@ module tb ();
   wire [31:0] debug_data_ops;
   wire spi_miso_ops;
   sim_spi_ram #(
-    .INIT_FILE("ops.mem")
+    .INIT_FILE("mem/ops.mem")
   ) spi_ram_ops (
     .spi_clk(spi_clk),
     .spi_mosi(spi_mosi),
@@ -84,7 +84,7 @@ module tb ();
   wire [31:0] debug_data_fib_memo;
   wire spi_miso_fib_memo;
   sim_spi_ram #(
-    .INIT_FILE("fib_memo.mem")
+    .INIT_FILE("mem/fib_memo.mem")
   ) spi_ram_fib_memo (
     .spi_clk(spi_clk),
     .spi_mosi(spi_mosi),
@@ -98,7 +98,7 @@ module tb ();
   wire [31:0] debug_data_fib_framed;
   wire spi_miso_fib_framed;
   sim_spi_ram #(
-    .INIT_FILE("fib_framed.mem")
+    .INIT_FILE("mem/fib_framed.mem")
   ) spi_ram_fib_framed (
     .spi_clk(spi_clk),
     .spi_mosi(spi_mosi),
@@ -112,7 +112,7 @@ module tb ();
   wire [31:0] debug_data_fib_recursive;
   wire spi_miso_fib_recursive;
   sim_spi_ram #(
-    .INIT_FILE("fib_recursive.mem")
+    .INIT_FILE("mem/fib_recursive.mem")
   ) spi_ram_fib_recursive (
     .spi_clk(spi_clk),
     .spi_mosi(spi_mosi),
